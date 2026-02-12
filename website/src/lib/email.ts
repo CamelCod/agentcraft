@@ -7,6 +7,7 @@ const getSenderEmail = () => {
 };
 
 // Get site URL from environment or use default
+// This should include the full base path (e.g., https://camelcod.github.io/agentcraft)
 const getSiteUrl = () => {
   return import.meta.env.SITE_URL || 'https://camelcod.github.io/agentcraft';
 };
