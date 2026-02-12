@@ -1,0 +1,200 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import AnalysisCard from '../../components/AnalysisCard.astro';
+import { getAnalysisPosts } from '../../lib/notion';
+
+const allPosts = await getAnalysisPosts();
+
+// Get unique industries and types
+const industries = [...new Set(allPosts.map(post => post.industry))].filter(Boolean);
+const types = [...new Set(allPosts.map(post => post.analysisType))];
+---
+
+<BaseLayout 
+  title="Analysis | AgentCraft"
+  description="In-depth market analysis, technical insights, and case studies on AI agents and automation."
+>
+  <Header />
+  
+  <main class="min-h-screen bg-gray-50">
+    <!-- Page Header -->
+    <section class="bg-gradient-to-r from-purple-600 to-pink-600 text-white py-16">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4">Analysis Hub</h1>
+        <p class="text-xl opacity-90">
+          In-depth research, market insights, and case studies
+        </p>
+      </div>
+    </section>
+    
+    <!-- Analysis Posts Grid -->
+    <section class="py-12">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Filters -->
+        <div class="space-y-6 mb-8">
+          <!-- Type Filter -->
+          {types.length > 0 && (
+            <div>
+              <h2 class="text-lg font-semibold mb-4">Filter by type:</h2>
+              <div class="flex flex-wrap gap-2">
+                <button 
+                  class="type-filter px-4 py-2 rounded-full bg-white border-2 border-gray-300 hover:border-purple-600 transition-colors"
+                  data-type="all"
+                >
+                  All Types
+                </button>
+                {types.map(type => (
+                  <button 
+                    class="type-filter px-4 py-2 rounded-full bg-white border-2 border-gray-300 hover:border-purple-600 transition-colors"
+                    data-type={type}
+                  >
+                    {type}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          <!-- Industry Filter -->
+          {industries.length > 0 && (
+            <div>
+              <h2 class="text-lg font-semibold mb-4">Filter by industry:</h2>
+              <div class="flex flex-wrap gap-2">
+                <button 
+                  class="industry-filter px-4 py-2 rounded-full bg-white border-2 border-gray-300 hover:border-purple-600 transition-colors"
+                  data-industry="all"
+                >
+                  All Industries
+                </button>
+                {industries.map(industry => (
+                  <button 
+                    class="industry-filter px-4 py-2 rounded-full bg-white border-2 border-gray-300 hover:border-purple-600 transition-colors"
+                    data-industry={industry}
+                  >
+                    {industry}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          <!-- Lead Magnet Toggle -->
+          <div>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input 
+                type="checkbox" 
+                id="gated-only"
+                class="w-5 h-5 text-purple-600"
+              />
+              <span class="font-medium">Show only gated content (email required)</span>
+            </label>
+          </div>
+        </div>
+        
+        <!-- Posts Grid -->
+        {allPosts.length > 0 ? (
+          <div id="posts-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {allPosts.map(post => (
+              <div 
+                class="analysis-card" 
+                data-type={post.analysisType}
+                data-industry={post.industry}
+                data-gated={post.leadMagnet}
+              >
+                <AnalysisCard post={post} />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div class="text-center py-12">
+            <p class="text-gray-600 text-lg">No analysis posts available yet. Check back soon!</p>
+          </div>
+        )}
+        
+        <!-- No Results Message -->
+        <div id="no-results" class="hidden text-center py-12">
+          <p class="text-gray-600 text-lg">No analysis found matching your criteria.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+  
+  <Footer />
+</BaseLayout>
+
+<script>
+  // Filter functionality
+  const typeFilters = document.querySelectorAll('.type-filter');
+  const industryFilters = document.querySelectorAll('.industry-filter');
+  const gatedCheckbox = document.getElementById('gated-only') as HTMLInputElement;
+  const analysisCards = document.querySelectorAll('.analysis-card');
+  const noResults = document.getElementById('no-results');
+  
+  let activeType = 'all';
+  let activeIndustry = 'all';
+  let gatedOnly = false;
+  
+  function filterAnalysis() {
+    let visibleCount = 0;
+    
+    analysisCards.forEach((card) => {
+      const cardElement = card as HTMLElement;
+      const type = cardElement.dataset.type || '';
+      const industry = cardElement.dataset.industry || '';
+      const isGated = cardElement.dataset.gated === 'true';
+      
+      const matchesType = activeType === 'all' || type === activeType;
+      const matchesIndustry = activeIndustry === 'all' || industry === activeIndustry;
+      const matchesGated = !gatedOnly || isGated;
+      
+      if (matchesType && matchesIndustry && matchesGated) {
+        cardElement.style.display = 'block';
+        visibleCount++;
+      } else {
+        cardElement.style.display = 'none';
+      }
+    });
+    
+    if (noResults) {
+      noResults.style.display = visibleCount === 0 ? 'block' : 'none';
+    }
+  }
+  
+  // Type filter
+  typeFilters.forEach(button => {
+    button.addEventListener('click', () => {
+      typeFilters.forEach(btn => {
+        btn.classList.remove('border-purple-600', 'bg-purple-50');
+        btn.classList.add('border-gray-300');
+      });
+      button.classList.remove('border-gray-300');
+      button.classList.add('border-purple-600', 'bg-purple-50');
+      
+      activeType = button.getAttribute('data-type') || 'all';
+      filterAnalysis();
+    });
+  });
+  
+  // Industry filter
+  industryFilters.forEach(button => {
+    button.addEventListener('click', () => {
+      industryFilters.forEach(btn => {
+        btn.classList.remove('border-purple-600', 'bg-purple-50');
+        btn.classList.add('border-gray-300');
+      });
+      button.classList.remove('border-gray-300');
+      button.classList.add('border-purple-600', 'bg-purple-50');
+      
+      activeIndustry = button.getAttribute('data-industry') || 'all';
+      filterAnalysis();
+    });
+  });
+  
+  // Gated filter
+  gatedCheckbox?.addEventListener('change', (e) => {
+    gatedOnly = (e.target as HTMLInputElement).checked;
+    filterAnalysis();
+  });
+</script>

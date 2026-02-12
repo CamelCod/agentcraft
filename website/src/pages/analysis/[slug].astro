@@ -1,0 +1,67 @@
+---
+import AnalysisPost from '../../layouts/AnalysisPost.astro';
+import { getAnalysisPosts, getPageContent, blocksToHtml } from '../../lib/notion';
+
+export async function getStaticPaths() {
+  const posts = await getAnalysisPosts();
+  
+  return posts.map(post => ({
+    params: { slug: post.slug },
+    props: { post }
+  }));
+}
+
+const { post } = Astro.props;
+
+// Fetch page content
+let contentHtml = '';
+if (post.id) {
+  const blocks = await getPageContent(post.id);
+  contentHtml = blocksToHtml(blocks);
+}
+
+// Fallback content if no Notion content
+if (!contentHtml) {
+  contentHtml = `
+    <div class="prose">
+      <p>This is a sample analysis post demonstrating the analysis layout and features.</p>
+      
+      <h2>Executive Summary</h2>
+      <p>This analysis provides comprehensive insights into the current state of AI agents and automation in the industry. Key findings suggest significant growth opportunities and emerging trends that organizations should be aware of.</p>
+      
+      <h2>Market Overview</h2>
+      <p>The AI automation market has experienced remarkable growth in recent years. Organizations across various sectors are increasingly adopting intelligent agents to streamline operations and enhance productivity.</p>
+      
+      <h3>Key Statistics</h3>
+      <ul>
+        <li>Market growth: 45% year-over-year</li>
+        <li>Adoption rate: 67% of enterprises</li>
+        <li>ROI: Average 3.2x within first year</li>
+      </ul>
+      
+      <h2>Industry Trends</h2>
+      <p>Several key trends are shaping the future of AI agents:</p>
+      <ol>
+        <li><strong>Multi-modal capabilities:</strong> Agents that can process text, images, and voice</li>
+        <li><strong>Autonomous decision-making:</strong> Reduced human intervention requirements</li>
+        <li><strong>Integration ecosystem:</strong> Seamless connectivity with existing tools</li>
+      </ol>
+      
+      <h2>Challenges and Opportunities</h2>
+      <p>While the market shows promise, organizations face several challenges including data privacy concerns, integration complexity, and the need for skilled personnel. However, these challenges present opportunities for innovation and differentiation.</p>
+      
+      <h2>Recommendations</h2>
+      <blockquote>
+        <p>Organizations should start with pilot projects to demonstrate value before scaling. Focus on use cases with clear ROI and measurable outcomes.</p>
+      </blockquote>
+      
+      <h2>Conclusion</h2>
+      <p>The future of AI agents and automation is bright. Organizations that invest strategically in these technologies will gain significant competitive advantages in the coming years.</p>
+    </div>
+  `;
+}
+---
+
+<AnalysisPost post={post}>
+  <Fragment set:html={contentHtml} />
+</AnalysisPost>

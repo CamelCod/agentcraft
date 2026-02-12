@@ -1,0 +1,51 @@
+---
+import BlogPost from '../../layouts/BlogPost.astro';
+import { getBlogPosts, getPageContent, blocksToHtml } from '../../lib/notion';
+
+export async function getStaticPaths() {
+  const posts = await getBlogPosts();
+  
+  return posts.map(post => ({
+    params: { slug: post.slug },
+    props: { post }
+  }));
+}
+
+const { post } = Astro.props;
+
+// Fetch page content
+let contentHtml = '';
+if (post.id) {
+  const blocks = await getPageContent(post.id);
+  contentHtml = blocksToHtml(blocks);
+}
+
+// Fallback content if no Notion content
+if (!contentHtml) {
+  contentHtml = `
+    <div class="prose">
+      <p>${post.excerpt}</p>
+      <p>This is a sample blog post. Connect this site to Notion to see the full content from your Notion database.</p>
+      <h2>Getting Started</h2>
+      <p>To see real content from Notion:</p>
+      <ol>
+        <li>Set up your Notion integration and databases</li>
+        <li>Add your API keys to the environment variables</li>
+        <li>Create blog posts in your Notion database</li>
+        <li>Rebuild the site to fetch the latest content</li>
+      </ol>
+      <h2>Features</h2>
+      <ul>
+        <li>Write posts in Notion's familiar editor</li>
+        <li>Automatic synchronization during builds</li>
+        <li>Support for rich formatting and media</li>
+        <li>SEO-friendly output</li>
+      </ul>
+    </div>
+  `;
+}
+---
+
+<BlogPost post={post}>
+  <Fragment set:html={contentHtml} />
+</BlogPost>

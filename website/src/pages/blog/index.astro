@@ -1,0 +1,157 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import BlogCard from '../../components/BlogCard.astro';
+import { getBlogPosts } from '../../lib/notion';
+
+const allPosts = await getBlogPosts();
+
+// Get unique tags
+const allTags = [...new Set(allPosts.flatMap(post => post.tags))];
+---
+
+<BaseLayout 
+  title="Blog | AgentCraft"
+  description="Explore tutorials, insights, and best practices for building intelligent agents and automation tools."
+>
+  <Header />
+  
+  <main class="min-h-screen bg-gray-50">
+    <!-- Page Header -->
+    <section class="bg-gradient-to-r from-primary-600 to-purple-600 text-white py-16">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4">Blog</h1>
+        <p class="text-xl opacity-90">
+          Tutorials, insights, and best practices for AI agents and automation
+        </p>
+      </div>
+    </section>
+    
+    <!-- Blog Posts Grid -->
+    <section class="py-12">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Tags Filter -->
+        {allTags.length > 0 && (
+          <div class="mb-8">
+            <h2 class="text-lg font-semibold mb-4">Filter by topic:</h2>
+            <div class="flex flex-wrap gap-2">
+              <button 
+                class="filter-tag px-4 py-2 rounded-full bg-white border-2 border-gray-300 hover:border-primary-600 transition-colors"
+                data-tag="all"
+              >
+                All Posts
+              </button>
+              {allTags.map(tag => (
+                <button 
+                  class="filter-tag px-4 py-2 rounded-full bg-white border-2 border-gray-300 hover:border-primary-600 transition-colors"
+                  data-tag={tag}
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        <!-- Search -->
+        <div class="mb-8">
+          <input 
+            type="search" 
+            id="search-input"
+            placeholder="Search posts..."
+            class="input max-w-md"
+          />
+        </div>
+        
+        <!-- Posts Grid -->
+        {allPosts.length > 0 ? (
+          <div id="posts-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {allPosts.map(post => (
+              <div 
+                class="post-card" 
+                data-tags={post.tags.join(',')}
+                data-title={post.title.toLowerCase()}
+                data-excerpt={post.excerpt.toLowerCase()}
+              >
+                <BlogCard post={post} />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div class="text-center py-12">
+            <p class="text-gray-600 text-lg">No blog posts available yet. Check back soon!</p>
+          </div>
+        )}
+        
+        <!-- No Results Message -->
+        <div id="no-results" class="hidden text-center py-12">
+          <p class="text-gray-600 text-lg">No posts found matching your criteria.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+  
+  <Footer />
+</BaseLayout>
+
+<script>
+  // Filter functionality
+  const filterTags = document.querySelectorAll('.filter-tag');
+  const postCards = document.querySelectorAll('.post-card');
+  const searchInput = document.getElementById('search-input') as HTMLInputElement;
+  const noResults = document.getElementById('no-results');
+  
+  let activeTag = 'all';
+  let searchQuery = '';
+  
+  function filterPosts() {
+    let visibleCount = 0;
+    
+    postCards.forEach((card) => {
+      const cardElement = card as HTMLElement;
+      const tags = cardElement.dataset.tags?.split(',') || [];
+      const title = cardElement.dataset.title || '';
+      const excerpt = cardElement.dataset.excerpt || '';
+      
+      const matchesTag = activeTag === 'all' || tags.includes(activeTag);
+      const matchesSearch = searchQuery === '' || 
+        title.includes(searchQuery) || 
+        excerpt.includes(searchQuery);
+      
+      if (matchesTag && matchesSearch) {
+        cardElement.style.display = 'block';
+        visibleCount++;
+      } else {
+        cardElement.style.display = 'none';
+      }
+    });
+    
+    if (noResults) {
+      noResults.style.display = visibleCount === 0 ? 'block' : 'none';
+    }
+  }
+  
+  // Tag filter
+  filterTags.forEach(button => {
+    button.addEventListener('click', () => {
+      // Update active state
+      filterTags.forEach(btn => {
+        btn.classList.remove('border-primary-600', 'bg-primary-50');
+        btn.classList.add('border-gray-300');
+      });
+      button.classList.remove('border-gray-300');
+      button.classList.add('border-primary-600', 'bg-primary-50');
+      
+      // Update active tag
+      activeTag = button.getAttribute('data-tag') || 'all';
+      filterPosts();
+    });
+  });
+  
+  // Search filter
+  searchInput?.addEventListener('input', (e) => {
+    searchQuery = (e.target as HTMLInputElement).value.toLowerCase();
+    filterPosts();
+  });
+</script>

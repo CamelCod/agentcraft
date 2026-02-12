@@ -1,0 +1,60 @@
+---
+import type { AnalysisPost } from '../lib/types';
+
+export interface Props {
+  post: AnalysisPost;
+}
+
+const { post } = Astro.props;
+---
+
+<article class="card">
+  <div class="p-6">
+    <div class="flex flex-wrap gap-2 mb-3">
+      <span class="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-medium">
+        {post.analysisType}
+      </span>
+      <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">
+        {post.industry}
+      </span>
+      {post.leadMagnet && (
+        <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">
+          📥 Free
+        </span>
+      )}
+    </div>
+    
+    <h3 class="text-xl font-bold mb-2 line-clamp-2">
+      <a href={`/agentcraft/analysis/${post.slug}`} class="hover:text-primary-600 transition-colors">
+        {post.title}
+      </a>
+    </h3>
+    
+    {post.keyInsights.length > 0 && (
+      <div class="mb-4">
+        <p class="text-sm text-gray-600 font-medium mb-2">Key Insights:</p>
+        <ul class="text-sm text-gray-600 space-y-1">
+          {post.keyInsights.slice(0, 3).map(insight => (
+            <li class="flex items-start gap-1">
+              <span class="text-primary-600">→</span>
+              <span class="line-clamp-1">{insight}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    )}
+    
+    <div class="flex items-center justify-between text-sm text-gray-500 mt-4">
+      <time datetime={post.publishedDate || ''}>
+        {post.publishedDate ? new Date(post.publishedDate).toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric'
+        }) : ''}
+      </time>
+      {post.leadMagnet && (
+        <span class="text-green-600 font-medium">Free Download</span>
+      )}
+    </div>
+  </div>
+</article>

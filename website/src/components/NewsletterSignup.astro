@@ -1,0 +1,95 @@
+---
+---
+
+<div class="bg-gradient-to-r from-primary-600 to-purple-600 rounded-lg p-8 text-white">
+  <div class="max-w-3xl mx-auto text-center">
+    <h3 class="text-3xl font-bold mb-2">📬 Stay Updated</h3>
+    <p class="text-xl mb-6 opacity-90">
+      Get the latest insights, tutorials, and resources delivered to your inbox.
+    </p>
+    
+    <form 
+      id="newsletter-form" 
+      class="flex flex-col sm:flex-row gap-4 justify-center items-stretch sm:items-center"
+    >
+      <input 
+        type="email" 
+        id="newsletter-email" 
+        name="email"
+        placeholder="Enter your email"
+        required
+        class="flex-1 max-w-md px-4 py-3 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-white"
+      />
+      
+      <button 
+        type="submit"
+        class="btn bg-white text-primary-600 hover:bg-gray-100 font-bold"
+        id="newsletter-submit"
+      >
+        <span id="newsletter-button-text">Subscribe</span>
+        <span id="newsletter-button-loading" class="hidden">...</span>
+      </button>
+    </form>
+    
+    <div id="newsletter-message" class="hidden mt-4 p-3 rounded-lg"></div>
+    
+    <p class="text-sm mt-4 opacity-75">
+      No spam, unsubscribe anytime. We respect your privacy.
+    </p>
+  </div>
+</div>
+
+<script>
+  const form = document.getElementById('newsletter-form') as HTMLFormElement;
+  const submitButton = document.getElementById('newsletter-submit') as HTMLButtonElement;
+  const buttonText = document.getElementById('newsletter-button-text') as HTMLElement;
+  const buttonLoading = document.getElementById('newsletter-button-loading') as HTMLElement;
+  const message = document.getElementById('newsletter-message') as HTMLElement;
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(form);
+    const email = formData.get('email') as string;
+    
+    // Show loading state
+    submitButton.disabled = true;
+    buttonText.classList.add('hidden');
+    buttonLoading.classList.remove('hidden');
+    message.classList.add('hidden');
+    
+    try {
+      const response = await fetch('/agentcraft/api/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          name: '',
+          source: 'Blog',
+          resourceDownloaded: ''
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        message.textContent = '✅ Success! Check your email to confirm your subscription.';
+        message.classList.remove('hidden', 'bg-red-500');
+        message.classList.add('bg-white', 'text-primary-600');
+        form.reset();
+      } else {
+        throw new Error(data.error || 'Failed to subscribe');
+      }
+    } catch (error) {
+      message.textContent = '❌ Something went wrong. Please try again.';
+      message.classList.remove('hidden', 'bg-white', 'text-primary-600');
+      message.classList.add('bg-red-500');
+    } finally {
+      submitButton.disabled = false;
+      buttonText.classList.remove('hidden');
+      buttonLoading.classList.add('hidden');
+    }
+  });
+</script>
