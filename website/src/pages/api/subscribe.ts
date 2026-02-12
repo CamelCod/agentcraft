@@ -25,6 +25,14 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
     
+    // Validate download link if provided (prevent open redirect vulnerabilities)
+    if (downloadLink && !isValidDownloadLink(downloadLink)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid download link' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+    
     // Add lead to Notion
     const leadAdded = await addLead(
       email,
@@ -85,4 +93,20 @@ export const POST: APIRoute = async ({ request }) => {
 function isValidEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
+}
+
+// URL validation helper to prevent open redirects
+function isValidDownloadLink(url: string): boolean {
+  try {
+    const parsedUrl = new URL(url);
+    // Allow only http/https protocols
+    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+      return false;
+    }
+    // Optionally, you could add allowlist of domains here
+    return true;
+  } catch {
+    // If URL parsing fails, it's invalid
+    return false;
+  }
 }

@@ -173,6 +173,9 @@ export async function getPageContent(pageId: string): Promise<NotionBlock[]> {
 /**
  * Add a lead to the Notion leads database
  */
+/**
+ * Add a lead to the Notion leads database
+ */
 export async function addLead(email: string, name: string, source: string, resource?: string): Promise<boolean> {
   try {
     const databaseId = import.meta.env.NOTION_LEADS_DATABASE_ID;
@@ -181,15 +184,20 @@ export async function addLead(email: string, name: string, source: string, resou
       return false;
     }
 
+    // Sanitize inputs to prevent excessively long strings
+    const sanitizedName = (name || '').substring(0, 200);
+    const sanitizedEmail = email.substring(0, 200);
+    const sanitizedResource = (resource || '').substring(0, 500);
+
     await notion.pages.create({
       parent: { database_id: databaseId },
       properties: {
         'Email': {
-          email: email
+          email: sanitizedEmail
         },
         'Name': {
           rich_text: [{
-            text: { content: name || '' }
+            text: { content: sanitizedName }
           }]
         },
         'Source': {
@@ -197,7 +205,7 @@ export async function addLead(email: string, name: string, source: string, resou
         },
         'Resource Downloaded': {
           rich_text: [{
-            text: { content: resource || '' }
+            text: { content: sanitizedResource }
           }]
         }
       }
