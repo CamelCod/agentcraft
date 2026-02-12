@@ -1,5 +1,11 @@
 import { Resend } from 'resend';
 
+// Get sender email from environment or use default
+const getSenderEmail = () => {
+  const fromDomain = import.meta.env.FROM_EMAIL_DOMAIN || 'agentcraft.dev';
+  return `AgentCraft <noreply@${fromDomain}>`;
+};
+
 /**
  * Send welcome email to new subscriber
  */
@@ -12,7 +18,7 @@ export async function sendWelcomeEmail(email: string, name: string): Promise<boo
 
     const resend = new Resend(import.meta.env.RESEND_API_KEY);
     await resend.emails.send({
-      from: 'AgentCraft <noreply@agentcraft.dev>',
+      from: getSenderEmail(),
       to: email,
       subject: 'Welcome to AgentCraft!',
       html: getWelcomeEmailTemplate(name)
@@ -42,7 +48,7 @@ export async function sendResourceEmail(
 
     const resend = new Resend(import.meta.env.RESEND_API_KEY);
     await resend.emails.send({
-      from: 'AgentCraft <noreply@agentcraft.dev>',
+      from: getSenderEmail(),
       to: email,
       subject: `Your ${resourceTitle} is ready!`,
       html: getResourceEmailTemplate(name, resourceTitle, downloadLink)

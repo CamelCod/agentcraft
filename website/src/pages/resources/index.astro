@@ -239,7 +239,8 @@ const resourcesByType = resources.reduce((acc, resource) => {
           email: formData.get('email'),
           name: formData.get('name'),
           source: 'Resource',
-          resourceDownloaded: formData.get('resourceTitle')
+          resourceDownloaded: formData.get('resourceTitle'),
+          downloadLink: (document.getElementById('download-link') as HTMLInputElement).value
         })
       });
       

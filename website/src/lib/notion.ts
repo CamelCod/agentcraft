@@ -334,15 +334,19 @@ function getPropertyValue(property: any, type: string): any {
   }
 }
 
+// Constants for date calculations
+const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
+
 // Mock data functions for development without Notion API
 function getMockBlogPosts(): BlogPost[] {
+  const now = Date.now();
   return [
     {
       id: '1',
       title: 'Getting Started with AgentCraft',
       slug: 'getting-started-agentcraft',
       status: 'Published',
-      publishedDate: new Date().toISOString(),
+      publishedDate: new Date(now).toISOString(),
       author: 'AgentCraft Team',
       tags: ['Tutorial', 'Getting Started'],
       excerpt: 'Learn how to get started with AgentCraft and build your first intelligent agent.',
@@ -354,7 +358,7 @@ function getMockBlogPosts(): BlogPost[] {
       title: 'Building Your First AI Agent',
       slug: 'building-first-ai-agent',
       status: 'Published',
-      publishedDate: new Date(Date.now() - 86400000).toISOString(),
+      publishedDate: new Date(now - MILLISECONDS_PER_DAY).toISOString(),
       author: 'AgentCraft Team',
       tags: ['Tutorial', 'AI', 'Automation'],
       excerpt: 'Step-by-step guide to creating your first AI agent with AgentCraft.',
@@ -366,7 +370,7 @@ function getMockBlogPosts(): BlogPost[] {
       title: 'Advanced Agent Patterns',
       slug: 'advanced-agent-patterns',
       status: 'Published',
-      publishedDate: new Date(Date.now() - 172800000).toISOString(),
+      publishedDate: new Date(now - (2 * MILLISECONDS_PER_DAY)).toISOString(),
       author: 'AgentCraft Team',
       tags: ['Advanced', 'Patterns', 'Best Practices'],
       excerpt: 'Explore advanced patterns and best practices for building sophisticated agents.',

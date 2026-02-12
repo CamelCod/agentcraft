@@ -6,7 +6,7 @@ export const POST: APIRoute = async ({ request }) => {
   try {
     // Parse request body
     const body = await request.json();
-    const { email, name, source, resourceDownloaded } = body;
+    const { email, name, source, resourceDownloaded, downloadLink } = body;
     
     // Validate email
     if (!email || !isValidEmail(email)) {
@@ -40,12 +40,12 @@ export const POST: APIRoute = async ({ request }) => {
     
     // Send appropriate email
     let emailSent = false;
-    if (resourceDownloaded && source === 'Resource') {
+    if (resourceDownloaded && source === 'Resource' && downloadLink) {
       emailSent = await sendResourceEmail(
         email,
         name || 'there',
         resourceDownloaded,
-        '#' // Replace with actual download link if available
+        downloadLink
       );
     } else {
       emailSent = await sendWelcomeEmail(email, name || 'there');
