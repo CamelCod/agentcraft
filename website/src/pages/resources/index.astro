@@ -5,6 +5,7 @@ import Footer from '../../components/Footer.astro';
 import { getResources } from '../../lib/notion';
 
 const resources = await getResources();
+const base = import.meta.env.BASE_URL;
 
 // Group resources by type
 const resourcesByType = resources.reduce((acc, resource) => {
@@ -140,7 +141,7 @@ const resourcesByType = resources.reduce((acc, resource) => {
     <h3 class="text-2xl font-bold mb-2" id="modal-title">Get Access</h3>
     <p class="text-gray-600 mb-6">Enter your email to download this resource</p>
     
-    <form id="resource-form" class="space-y-4">
+    <form id="resource-form" class="space-y-4" data-base-url={base}>
       <input type="hidden" id="resource-id" name="resourceId" />
       <input type="hidden" id="resource-title" name="resourceTitle" />
       <input type="hidden" id="download-link" name="downloadLink" />
@@ -223,6 +224,7 @@ const resourcesByType = resources.reduce((acc, resource) => {
     const buttonText = document.getElementById('modal-button-text') as HTMLElement;
     const buttonLoading = document.getElementById('modal-button-loading') as HTMLElement;
     const message = document.getElementById('modal-message') as HTMLElement;
+    const baseUrl = resourceForm.dataset.baseUrl || '';
     
     submitButton.disabled = true;
     buttonText.classList.add('hidden');
@@ -230,7 +232,7 @@ const resourcesByType = resources.reduce((acc, resource) => {
     message.classList.add('hidden');
     
     try {
-      const response = await fetch('/agentcraft/api/subscribe', {
+      const response = await fetch(`${baseUrl}api/subscribe`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

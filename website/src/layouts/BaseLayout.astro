@@ -11,12 +11,13 @@ export interface Props {
 const { 
   title, 
   description = 'AgentCraft - A collection of intelligent agents and automation tools designed to streamline workflows and enhance productivity.',
-  image = '/agentcraft/og-image.png',
+  image = `${import.meta.env.BASE_URL}og-image.png`,
   article = false
 } = Astro.props;
 
-const siteUrl = 'https://camelcod.github.io/agentcraft';
+const siteUrl = Astro.site?.toString() || 'https://camelcod.github.io/agentcraft';
 const canonicalURL = new URL(Astro.url.pathname, siteUrl);
+const faviconUrl = `${import.meta.env.BASE_URL}favicon.svg`;
 ---
 
 <!DOCTYPE html>
@@ -24,7 +25,7 @@ const canonicalURL = new URL(Astro.url.pathname, siteUrl);
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/svg+xml" href="/agentcraft/favicon.svg" />
+    <link rel="icon" type="image/svg+xml" href={faviconUrl} />
     <meta name="generator" content={Astro.generator} />
     
     <!-- Primary Meta Tags -->

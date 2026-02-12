@@ -14,6 +14,8 @@ const analysisPosts = await getAnalysisPosts();
 const featuredPosts = blogPosts.slice(0, 3);
 // Get latest analysis post
 const featuredAnalysis = analysisPosts[0];
+
+const base = import.meta.env.BASE_URL;
 ---
 
 <BaseLayout 
@@ -36,7 +38,7 @@ const featuredAnalysis = analysisPosts[0];
             powerful AI agents and automate your workflows effectively.
           </p>
           <div class="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="/agentcraft/blog" class="btn btn-primary">
+            <a href={`${base}blog`} class="btn btn-primary">
               Explore Blog
             </a>
             <a href="https://github.com/CamelCod/agentcraft" class="btn btn-outline" target="_blank" rel="noopener noreferrer">
@@ -83,7 +85,7 @@ const featuredAnalysis = analysisPosts[0];
               <h2 class="text-3xl font-bold mb-2">Latest from the Blog</h2>
               <p class="text-gray-600">Insights, tutorials, and best practices</p>
             </div>
-            <a href="/agentcraft/blog" class="text-primary-600 hover:text-primary-700 font-medium">
+            <a href={`${base}blog`} class="text-primary-600 hover:text-primary-700 font-medium">
               View all posts →
             </a>
           </div>
@@ -106,7 +108,7 @@ const featuredAnalysis = analysisPosts[0];
               <h2 class="text-3xl font-bold mb-2">Featured Analysis</h2>
               <p class="text-gray-600">In-depth research and market insights</p>
             </div>
-            <a href="/agentcraft/analysis" class="text-primary-600 hover:text-primary-700 font-medium">
+            <a href={`${base}analysis`} class="text-primary-600 hover:text-primary-700 font-medium">
               View all analysis →
             </a>
           </div>
@@ -176,7 +178,7 @@ const featuredAnalysis = analysisPosts[0];
             </div>
           </a>
           
-          <a href="/agentcraft/resources" class="card hover:scale-105 transition-transform">
+          <a href={`${base}resources`} class="card hover:scale-105 transition-transform">
             <div class="p-6 text-center">
               <div class="text-4xl mb-4">🎁</div>
               <h3 class="text-xl font-bold mb-2">Free Resources</h3>
