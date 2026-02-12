@@ -6,6 +6,11 @@ const getSenderEmail = () => {
   return `AgentCraft <noreply@${fromDomain}>`;
 };
 
+// Get site URL from environment or use default
+const getSiteUrl = () => {
+  return import.meta.env.SITE_URL || 'https://camelcod.github.io/agentcraft';
+};
+
 /**
  * Send welcome email to new subscriber
  */
@@ -65,6 +70,7 @@ export async function sendResourceEmail(
  * Welcome email HTML template
  */
 function getWelcomeEmailTemplate(name: string): string {
+  const siteUrl = getSiteUrl();
   return `
     <!DOCTYPE html>
     <html>
@@ -124,7 +130,7 @@ function getWelcomeEmailTemplate(name: string): string {
             <li>💡 Industry best practices</li>
           </ul>
           <p style="text-align: center;">
-            <a href="https://camelcod.github.io/agentcraft" class="button">Explore AgentCraft</a>
+            <a href="${siteUrl}" class="button">Explore AgentCraft</a>
           </p>
           <p>Stay tuned for our latest content and resources!</p>
           <p>Best regards,<br>The AgentCraft Team</p>
@@ -141,6 +147,7 @@ function getWelcomeEmailTemplate(name: string): string {
  * Resource download email HTML template
  */
 function getResourceEmailTemplate(name: string, resourceTitle: string, downloadLink: string): string {
+  const siteUrl = getSiteUrl();
   return `
     <!DOCTYPE html>
     <html>
@@ -198,7 +205,7 @@ function getResourceEmailTemplate(name: string, resourceTitle: string, downloadL
             <a href="${downloadLink}" class="button">Download Now</a>
           </p>
           <p>We hope you find this resource valuable. If you have any questions or feedback, feel free to reach out!</p>
-          <p>Looking for more resources? Visit our <a href="https://camelcod.github.io/agentcraft/resources">Resources page</a>.</p>
+          <p>Looking for more resources? Visit our <a href="${siteUrl}/resources">Resources page</a>.</p>
           <p>Best regards,<br>The AgentCraft Team</p>
         </div>
         <div class="footer">
