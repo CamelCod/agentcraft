@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://camelcod.github.io/agentcraft/sitemap-index.xml

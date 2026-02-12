@@ -1,0 +1,192 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import BlogCard from '../components/BlogCard.astro';
+import AnalysisCard from '../components/AnalysisCard.astro';
+import NewsletterSignup from '../components/NewsletterSignup.astro';
+import { getBlogPosts, getAnalysisPosts } from '../lib/notion';
+
+const blogPosts = await getBlogPosts();
+const analysisPosts = await getAnalysisPosts();
+
+// Get latest 3 blog posts
+const featuredPosts = blogPosts.slice(0, 3);
+// Get latest analysis post
+const featuredAnalysis = analysisPosts[0];
+---
+
+<BaseLayout 
+  title="AgentCraft - Intelligent Agents & Automation Tools"
+  description="A collection of intelligent agents and automation tools designed to streamline workflows and enhance productivity."
+>
+  <Header />
+  
+  <main>
+    <!-- Hero Section -->
+    <section class="bg-gradient-to-br from-primary-50 via-purple-50 to-pink-50 py-20">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+          <h1 class="text-5xl md:text-6xl font-bold mb-6">
+            Build Intelligent <span class="gradient-text">Agents</span>
+            <br />That Actually Work
+          </h1>
+          <p class="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+            AgentCraft provides the tools, insights, and resources you need to create 
+            powerful AI agents and automate your workflows effectively.
+          </p>
+          <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="/agentcraft/blog" class="btn btn-primary">
+              Explore Blog
+            </a>
+            <a href="https://github.com/CamelCod/agentcraft" class="btn btn-outline" target="_blank" rel="noopener noreferrer">
+              View on GitHub
+            </a>
+          </div>
+        </div>
+        
+        <!-- Feature Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16">
+          <div class="bg-white rounded-lg p-6 shadow-md">
+            <div class="text-4xl mb-4">📚</div>
+            <h3 class="text-xl font-bold mb-2">In-Depth Tutorials</h3>
+            <p class="text-gray-600">
+              Step-by-step guides to building and deploying AI agents for various use cases.
+            </p>
+          </div>
+          
+          <div class="bg-white rounded-lg p-6 shadow-md">
+            <div class="text-4xl mb-4">📊</div>
+            <h3 class="text-xl font-bold mb-2">Market Analysis</h3>
+            <p class="text-gray-600">
+              Expert insights on AI trends, tools, and industry best practices.
+            </p>
+          </div>
+          
+          <div class="bg-white rounded-lg p-6 shadow-md">
+            <div class="text-4xl mb-4">🔧</div>
+            <h3 class="text-xl font-bold mb-2">Practical Resources</h3>
+            <p class="text-gray-600">
+              Templates, checklists, and tools to accelerate your agent development.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- Featured Blog Posts -->
+    {featuredPosts.length > 0 && (
+      <section class="py-16 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="flex justify-between items-end mb-8">
+            <div>
+              <h2 class="text-3xl font-bold mb-2">Latest from the Blog</h2>
+              <p class="text-gray-600">Insights, tutorials, and best practices</p>
+            </div>
+            <a href="/agentcraft/blog" class="text-primary-600 hover:text-primary-700 font-medium">
+              View all posts →
+            </a>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {featuredPosts.map(post => (
+              <BlogCard post={post} />
+            ))}
+          </div>
+        </div>
+      </section>
+    )}
+    
+    <!-- Featured Analysis -->
+    {featuredAnalysis && (
+      <section class="py-16 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="flex justify-between items-end mb-8">
+            <div>
+              <h2 class="text-3xl font-bold mb-2">Featured Analysis</h2>
+              <p class="text-gray-600">In-depth research and market insights</p>
+            </div>
+            <a href="/agentcraft/analysis" class="text-primary-600 hover:text-primary-700 font-medium">
+              View all analysis →
+            </a>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div class="md:col-span-1">
+              <AnalysisCard post={featuredAnalysis} />
+            </div>
+            <div class="md:col-span-1 lg:col-span-2 bg-white rounded-lg p-8 shadow-md">
+              <h3 class="text-2xl font-bold mb-4">Why AgentCraft?</h3>
+              <div class="space-y-4 text-gray-600">
+                <p>
+                  In the rapidly evolving world of AI and automation, having the right 
+                  knowledge and tools is crucial. AgentCraft bridges the gap between theory 
+                  and practice.
+                </p>
+                <ul class="space-y-2">
+                  <li class="flex items-start gap-2">
+                    <span class="text-primary-600 font-bold">✓</span>
+                    <span>Practical, production-ready examples</span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="text-primary-600 font-bold">✓</span>
+                    <span>Cutting-edge industry insights</span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="text-primary-600 font-bold">✓</span>
+                    <span>Community-driven development</span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="text-primary-600 font-bold">✓</span>
+                    <span>Open-source and accessible</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    )}
+    
+    <!-- Newsletter CTA -->
+    <section class="py-16 bg-white">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <NewsletterSignup />
+      </div>
+    </section>
+    
+    <!-- Links Section -->
+    <section class="py-16 bg-gray-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="text-3xl font-bold mb-8 text-center">Explore More</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <a href="https://github.com/CamelCod/agentcraft" target="_blank" rel="noopener noreferrer" class="card hover:scale-105 transition-transform">
+            <div class="p-6 text-center">
+              <div class="text-4xl mb-4">💻</div>
+              <h3 class="text-xl font-bold mb-2">Browse Agents</h3>
+              <p class="text-gray-600">Explore our collection of agent implementations</p>
+            </div>
+          </a>
+          
+          <a href="https://github.com/CamelCod/agentcraft#readme" target="_blank" rel="noopener noreferrer" class="card hover:scale-105 transition-transform">
+            <div class="p-6 text-center">
+              <div class="text-4xl mb-4">📖</div>
+              <h3 class="text-xl font-bold mb-2">Documentation</h3>
+              <p class="text-gray-600">Learn how to get started with AgentCraft</p>
+            </div>
+          </a>
+          
+          <a href="/agentcraft/resources" class="card hover:scale-105 transition-transform">
+            <div class="p-6 text-center">
+              <div class="text-4xl mb-4">🎁</div>
+              <h3 class="text-xl font-bold mb-2">Free Resources</h3>
+              <p class="text-gray-600">Download templates, guides, and checklists</p>
+            </div>
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+  
+  <Footer />
+</BaseLayout>

@@ -1,0 +1,109 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply bg-white text-gray-900 antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold;
+  }
+
+  h1 {
+    @apply text-4xl md:text-5xl;
+  }
+
+  h2 {
+    @apply text-3xl md:text-4xl;
+  }
+
+  h3 {
+    @apply text-2xl md:text-3xl;
+  }
+
+  a {
+    @apply text-primary-600 hover:text-primary-700 transition-colors;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center px-6 py-3 rounded-lg font-semibold transition-all duration-200;
+  }
+
+  .btn-primary {
+    @apply bg-primary-600 text-white hover:bg-primary-700 shadow-lg hover:shadow-xl;
+  }
+
+  .btn-secondary {
+    @apply bg-gray-200 text-gray-900 hover:bg-gray-300;
+  }
+
+  .btn-outline {
+    @apply border-2 border-primary-600 text-primary-600 hover:bg-primary-600 hover:text-white;
+  }
+
+  .card {
+    @apply bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden;
+  }
+
+  .input {
+    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent;
+  }
+
+  .prose {
+    @apply max-w-none;
+  }
+
+  .prose h1 {
+    @apply text-3xl font-bold mt-8 mb-4;
+  }
+
+  .prose h2 {
+    @apply text-2xl font-bold mt-6 mb-3;
+  }
+
+  .prose h3 {
+    @apply text-xl font-bold mt-4 mb-2;
+  }
+
+  .prose p {
+    @apply mb-4 leading-relaxed;
+  }
+
+  .prose ul, .prose ol {
+    @apply mb-4 pl-6;
+  }
+
+  .prose li {
+    @apply mb-2;
+  }
+
+  .prose code {
+    @apply bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono;
+  }
+
+  .prose pre {
+    @apply bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto mb-4;
+  }
+
+  .prose blockquote {
+    @apply border-l-4 border-primary-500 pl-4 italic my-4;
+  }
+
+  .prose a {
+    @apply text-primary-600 hover:text-primary-700 underline;
+  }
+}
+
+@layer utilities {
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-purple-600;
+  }
+}
