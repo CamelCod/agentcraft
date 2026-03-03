@@ -17,7 +17,7 @@ export const POST: APIRoute = async ({ request }) => {
     }
     
     // Validate source
-    const validSources = ['Blog', 'Analysis', 'Resource'];
+    const validSources = ['Blog', 'Analysis', 'Resource', 'Newsletter'];
     if (!source || !validSources.includes(source)) {
       return new Response(
         JSON.stringify({ error: 'Invalid source' }),
