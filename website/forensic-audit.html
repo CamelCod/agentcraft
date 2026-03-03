@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lead Leakage Audit | UAE Revenue Forensic</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--black:#080A0C;--deep:#0D1117;--panel:#111820;--border:#1E2D3D;--amber:#F5A623;--amber-dim:#7A5112;--red:#E53E3E;--green:#38A169;--yellow:#D69E2E;--text:#C9D1D9;--dim:#58677A;--mono:'Share Tech Mono',monospace;--display:'Bebas Neue',sans-serif;--body:'DM Sans',sans-serif}*{margin:0;padding:0;box-sizing:border-box}body{background:var(--black);color:var(--text);font-family:var(--body);min-height:100vh;overflow-x:hidden;position:relative}body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(245,166,35,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(245,166,35,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.15) 2px,rgba(0,0,0,.15) 4px);pointer-events:none;z-index:0}.container{max-width:720px;margin:0 auto;padding:40px 24px;position:relative;z-index:1}.header{text-align:center;margin-bottom:40px;animation:fadeDown .6s ease}.badge{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:3px;color:var(--amber);background:rgba(245,166,35,.08);border:1px solid var(--amber-dim);padding:6px 14px;margin-bottom:20px}h1{font-family:var(--display);font-size:clamp(48px,10vw,82px);line-height:.88;letter-spacing:2px;color:#fff}h1 span{color:var(--amber)}.subtitle{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:2px;margin-top:16px}.progress-wrap{margin-bottom:32px}.progress-meta{display:flex;justify-content:space-between;margin-bottom:8px}.prog-label{font-family:var(--mono);font-size:10px;color:var(--amber);letter-spacing:2px}.prog-count{font-family:var(--mono);font-size:10px;color:var(--dim)}.progress-track{height:2px;background:var(--border)}.progress-fill{height:100%;background:var(--amber);transition:width .4s cubic-bezier(.4,0,.2,1)}.step-card{background:var(--panel);border:1px solid var(--border);border-top:2px solid var(--amber);padding:36px 32px 28px;animation:stepIn .35s cubic-bezier(.4,0,.2,1)}.step-card.going-back{animation:stepBack .35s cubic-bezier(.4,0,.2,1)}@keyframes stepIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}@keyframes stepBack{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:none}}.step-question{font-size:clamp(18px,3vw,24px);font-weight:500;color:#fff;line-height:1.4;margin-bottom:4px}.step-hint{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.4px;margin-bottom:24px;line-height:1.6}.step-hint em{color:var(--amber);font-style:normal}.step-input{background:transparent;border:none;border-bottom:2px solid var(--amber);color:#fff;font-family:var(--body);font-size:clamp(22px,4vw,28px);font-weight:300;padding:10px 4px;outline:none;width:100%;transition:border-color .2s}.step-input::placeholder{color:var(--dim);font-size:clamp(16px,2vw,20px)}.step-input:focus{border-bottom-color:#fff}.input-suffix{font-family:var(--mono);font-size:11px;color:var(--amber);margin-top:8px;letter-spacing:1px}.step-dots{display:flex;justify-content:center;gap:8px;margin-top:28px}.step-dot{width:8px;height:8px;background:var(--border);transition:all .3s}.step-dot.active{background:var(--amber);transform:scale(1.3)}.step-dot.completed{background:var(--amber-dim)}.choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}@media(max-width:500px){.choice-grid{grid-template-columns:1fr}}.choice-tile{background:var(--deep);border:1px solid var(--border);padding:16px 18px 14px;cursor:pointer;transition:all .18s;text-align:left;position:relative}.choice-tile:hover{border-color:var(--amber);background:rgba(245,166,35,.05)}.choice-tile.selected{border-color:var(--amber);background:rgba(245,166,35,.1)}.choice-tile.selected::after{content:'✓';position:absolute;top:12px;right:14px;color:var(--amber);font-family:var(--mono);font-size:13px}.tile-icon{font-size:20px;margin-bottom:6px}.tile-main{font-size:14px;font-weight:500;color:#fff;margin-bottom:2px}.tile-sub{font-family:var(--mono);font-size:10px;color:var(--dim);line-height:1.4}.step-nav{display:flex;justify-content:space-between;align-items:center;margin-top:28px;gap:12px}.btn-back{background:transparent;border:1px solid var(--border);color:var(--dim);font-family:var(--mono);font-size:10px;letter-spacing:2px;padding:12px 16px;cursor:pointer;transition:all .2s;text-transform:uppercase;flex-shrink:0}.btn-back:hover{border-color:var(--dim);color:var(--text)}.btn-next{flex:1;background:var(--amber);color:var(--black);border:none;font-family:var(--display);font-size:20px;letter-spacing:3px;padding:14px 24px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}.btn-next::before{content:'';position:absolute;inset:0;background:rgba(255,255,255,.12);transform:translateX(-100%);transition:transform .3s ease}.btn-next:hover::before{transform:translateX(0)}.btn-next:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(245,166,35,.3)}.btn-next:disabled{opacity:.3;cursor:not-allowed;transform:none;box-shadow:none}#gate-section{display:none;animation:fadeUp .5s ease}.gate-card{background:var(--panel);border:1px solid var(--border);border-top:2px solid var(--amber);padding:36px 32px}.gate-heading{font-family:var(--display);font-size:clamp(26px,5vw,38px);letter-spacing:2px;color:#fff;line-height:1.1;margin-bottom:8px}.gate-sub{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:1px;margin-bottom:28px;line-height:1.6}.gate-sub em{color:var(--amber);font-style:normal}.gate-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}@media(max-width:540px){.gate-row{grid-template-columns:1fr}}.gate-row.full{grid-template-columns:1fr}.gate-field{display:flex;flex-direction:column;gap:6px}.gate-label{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase}.gate-label .req{color:var(--amber)}.gate-input{background:var(--deep);border:1px solid var(--border);border-bottom:2px solid var(--amber);color:#fff;font-family:var(--body);font-size:14px;padding:10px 12px;outline:none;width:100%;transition:border-color .2s,box-shadow .2s}.gate-input::placeholder{color:var(--dim);font-size:13px}.gate-input:focus{border-color:var(--amber);box-shadow:0 0 0 2px rgba(245,166,35,.08)}.gate-input.error{border-color:var(--red)!important;box-shadow:0 0 0 2px rgba(229,62,62,.1)}.gate-input.valid{border-bottom-color:var(--green)}.field-error{font-family:var(--mono);font-size:9px;color:var(--red);margin-top:4px;min-height:14px}.otp-area{margin-top:18px;padding:18px 20px;background:var(--deep);border:1px solid var(--border);border-left:3px solid var(--amber);display:none}.otp-area.visible{display:block}.otp-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px}.otp-label-text{font-family:var(--mono);font-size:10px;color:var(--amber);letter-spacing:1.5px;text-transform:uppercase}.otp-timer{font-family:var(--mono);font-size:11px;color:var(--dim)}.otp-timer.expired{color:var(--red)}.otp-boxes{display:flex;gap:8px;margin-bottom:12px}.otp-box{width:44px;height:52px;background:var(--panel);border:1px solid var(--border);border-bottom:2px solid var(--amber);color:#fff;font-family:var(--mono);font-size:20px;text-align:center;outline:none;transition:border-color .2s;caret-color:transparent}@media(max-width:400px){.otp-box{width:38px;height:48px;font-size:16px}}.otp-box:focus{border-color:var(--amber);box-shadow:0 0 0 2px rgba(245,166,35,.1)}.otp-box.filled{border-bottom-color:var(--green)}.otp-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap}.otp-send-btn{background:transparent;border:1px solid var(--amber);color:var(--amber);font-family:var(--mono);font-size:10px;letter-spacing:2px;padding:8px 16px;cursor:pointer;transition:all .2s;text-transform:uppercase}.otp-send-btn:hover{background:rgba(245,166,35,.08)}.otp-send-btn:disabled{opacity:.35;cursor:not-allowed}.otp-resend{font-family:var(--mono);font-size:10px;color:var(--dim);cursor:pointer;text-decoration:underline;transition:color .2s;display:none}.otp-resend:hover{color:var(--amber)}.otp-status{font-family:var(--mono);font-size:10px;margin-top:8px;min-height:16px}.otp-status.ok{color:var(--green)}.otp-status.err{color:var(--red)}.phone-row{display:flex;gap:8px}.country-select{background:var(--deep);border:1px solid var(--border);border-bottom:2px solid var(--amber);color:#fff;font-family:var(--mono);font-size:12px;padding:10px 8px;outline:none;width:110px;cursor:pointer}.country-select:focus{border-color:var(--amber)}.role-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:12px}@media(max-width:500px){.role-grid{grid-template-columns:repeat(2,1fr)}}.role-tile{
+  pointer-events: auto;background:var(--deep);border:1px solid var(--border);padding:8px 10px;cursor:pointer;transition:all .18s;text-align:center;font-family:var(--mono);font-size:10px;color:var(--dim);letter-spacing:.5px}.role-tile:hover{border-color:var(--amber);color:var(--text)}.role-tile.selected{border-color:var(--amber);background:rgba(245,166,35,.1);color:var(--amber)}.gate-cta{width:100%;background:var(--amber);color:var(--black);border:none;font-family:var(--display);font-size:20px;letter-spacing:3px;padding:16px;cursor:pointer;transition:all .2s;margin-top:20px;position:relative;overflow:hidden}.gate-cta::before{content:'';position:absolute;inset:0;background:rgba(255,255,255,.12);transform:translateX(-100%);transition:transform .3s ease}.gate-cta:hover::before{transform:translateX(0)}.gate-cta:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(245,166,35,.3)}.gate-cta:disabled{opacity:.35;cursor:not-allowed;transform:none;box-shadow:none}.privacy-note{font-family:var(--mono);font-size:9px;color:var(--dim);text-align:center;margin-top:12px;line-height:1.5}.privacy-note a{color:var(--dim);text-decoration:underline}#report-section{display:none;animation:fadeUp .5s ease}.panel-label{font-family:var(--mono);font-size:10px;letter-spacing:3px;color:var(--amber);text-transform:uppercase;margin-bottom:24px;display:flex;align-items:center;gap:8px}.panel-label::after{content:'';flex:1;height:1px;background:var(--border)}.status-banner{padding:18px 28px;margin-bottom:24px;display:flex;align-items:center;gap:14px;font-family:var(--display);font-size:24px;letter-spacing:2px}.status-banner.critical{background:rgba(229,62,62,.1);border:1px solid var(--red);color:var(--red)}.status-banner.at-risk{background:rgba(214,158,46,.1);border:1px solid var(--yellow);color:var(--yellow)}.status-banner.stable{background:rgba(56,161,105,.1);border:1px solid var(--green);color:var(--green)}.pulse{width:12px;height:12px;border-radius:50%;flex-shrink:0;animation:pulseAnim 1.5s infinite}.critical .pulse{background:var(--red)}.at-risk .pulse{background:var(--yellow)}.stable .pulse{background:var(--green)}@keyframes pulseAnim{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(1.15)}}.metric-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;margin-bottom:24px}@media(max-width:560px){.metric-grid{grid-template-columns:1fr}}.metric-card{background:var(--panel);border:1px solid var(--border);padding:20px 14px;text-align:center}.metric-label{font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:6px}.metric-value{font-family:var(--display);font-size:28px;color:var(--amber);line-height:1}.metric-sub{font-family:var(--mono);font-size:9px;color:var(--dim);margin-top:4px}.report-block{background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--amber);padding:24px 28px;margin-bottom:14px}.report-block h3{font-family:var(--display);font-size:18px;letter-spacing:2px;color:#fff;margin-bottom:12px}.report-block p{font-size:13px;line-height:1.7;color:var(--text)}.highlight{color:var(--amber);font-family:var(--mono);font-weight:bold}.red{color:var(--red)}.green{color:var(--green)}.data-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:12px}.data-row:last-child{border-bottom:none}.data-row .val{color:var(--amber)}.warning-box{background:rgba(229,62,62,.06);border:1px solid rgba(229,62,62,.3);padding:12px 16px;margin-top:14px;font-family:var(--mono);font-size:10px;color:#FC8181;line-height:1.6}.warning-box::before{content:'⚠️ '}.reset-btn{background:transparent;border:1px solid var(--border);color:var(--dim);font-family:var(--mono);font-size:10px;letter-spacing:2px;padding:10px 20px;cursor:pointer;transition:all .2s;text-transform:uppercase;margin-top:14px}.reset-btn:hover{border-color:var(--amber);color:var(--amber)}.ticker{font-family:var(--mono);font-size:10px;color:var(--dim);border-top:1px solid var(--border);padding:10px 0;margin-top:40px;overflow:hidden;white-space:nowrap}.ticker span{display:inline-block;animation:tick 20s linear infinite}@keyframes tick{from{transform:translateX(0)}to{transform:translateX(-50%)}}@keyframes fadeDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:none}}@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="badge">UAE REVENUE FORENSIC SYSTEM — v2.3</div>
+    <h1>LEAD<br><span>LEAKAGE</span><br>AUDIT</h1>
+    <div class="subtitle">DIAGNOSTIC PRESSURE TEST // 7 QUICK QUESTIONS</div>
+  </div>
+
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-meta"><span class="prog-label" id="prog-label">STEP 1 OF 7</span><span class="prog-count" id="prog-count">Business Info</span></div>
+    <div class="progress-track"><div class="progress-fill" id="prog-fill" style="width:14%"></div></div>
+  </div>
+
+  <div id="form-section">
+    <div class="step-card" id="step-card">
+      <div id="step-content"></div>
+    </div>
+  </div>
+  <!-- OLD STEPS (unused) --
+  <!--
+  <div class="step-card" id="stepCard">
+      <div class="step" data-step="1">
+        <p class="step-question">What is your business name?</p>
+        <p class="step-hint">Appears on the <em>forensic report</em></p>
+        <input type="text" class="step-input" id="inputCompany" placeholder="e.g. Al-Futtaim Clinic" autocomplete="off">
+        <div class="input-suffix">COMPANY NAME</div>
+        <div class="step-nav"><button class="btn-next" onclick="nextStep()" disabled>START →</button></div>
+      </div>
+      <div class="step" data-step="2" style="display:none">
+        <p class="step-question">How many leads per month?</p>
+        <p class="step-hint">All channels: <em>Website, WhatsApp, Referrals, Ads</em></p>
+        <input type="number" class="step-input" id="inputLeads" placeholder="e.g. 150" autocomplete="off">
+        <div class="input-suffix">LEADS / MONTH</div>
+        <div class="step-nav"><button class="btn-back" onclick="prevStep()">← BACK</button><button class="btn-next" onclick="nextStep()" disabled>NEXT →</button></div>
+      </div>
+      <div class="step" data-step="3" style="display:none">
+        <p class="step-question">What % of leads go cold?</p>
+        <p class="step-hint"><em>Never receive a follow-up</em></p>
+        <input type="number" class="step-input" id="inputGhost" placeholder="e.g. 35" max="100">
+        <div class="input-suffix">% GHOST RATE</div>
+        <div class="step-nav"><button class="btn-back" onclick="prevStep()">← BACK</button><button class="btn-next" onclick="nextStep()" disabled>NEXT →</button></div>
+      </div>
+      <div class="step" data-step="4" style="display:none">
+        <p class="step-question">Average response time?</p>
+        <p class="step-hint"><em>UAE:</em> &lt;2min competitive, &gt;1hr critical</p>
+        <input type="number" class="step-input" id="inputResponse" placeholder="e.g. 3" step="0.1">
+        <div class="input-suffix">MINUTES</div>
+        <div class="step-nav"><button class="btn-back" onclick="prevStep()">← BACK</button><button class="btn-next" onclick="nextStep()" disabled>NEXT →</button></div>
+      </div>
+      <div class="step" data-step="5" style="display:none">
+        <p class="step-question">Staff handling leads manually?</p>
+        <p class="step-hint"><em>Follow-up, scheduling, WhatsApp</em></p>
+        <input type="number" class="step-input" id="inputStaff" placeholder="e.g. 2" min="0">
+        <div class="input-suffix">ADMIN STAFF</div>
+        <div class="step-nav"><button class="btn-back" onclick="prevStep()">← BACK</button><button class="btn-next" onclick="nextStep()" disabled>NEXT →</button></div>
+      </div>
+      <div class="step" data-step="6" style="display:none">
+        <p class="step-question">Average customer value?</p>
+        <p class="step-hint">Revenue per <em>closed client</em></p>
+        <input type="number" class="step-input" id="inputValue" placeholder="e.g. 1500" min="0">
+        <div class="input-suffix">AED / CUSTOMER</div>
+        <div class="step-nav"><button class="btn-back" onclick="prevStep()">← BACK</button><button class="btn-next" onclick="nextStep()" disabled>NEXT →</button></div>
+      </div>
+      <div class="step" data-step="7" style="display:none">
+        <p class="step-question">Lead capture method?</p>
+        <p class="step-hint">Affects <em>compliance analysis</em></p>
+        <div class="choice-grid">
+          <div class="choice-tile" data-value="manual" onclick="selectChoice(this)"><div class="tile-icon">📱</div><div class="tile-main">Manual / WhatsApp</div><div class="tile-sub">Screenshots, forwarded</div></div>
+          <div class="choice-tile" data-value="crm" onclick="selectChoice(this)"><div class="tile-icon">🗄️</div><div class="tile-main">CRM / Spreadsheet</div><div class="tile-sub">HubSpot, Sheets</div></div>
+          <div class="choice-tile" data-value="automated" onclick="selectChoice(this)"><div class="tile-icon">⚡</div><div class="tile-main">Automated</div><div class="tile-sub">Zapier, APIs</div></div>
+          <div class="choice-tile" data-value="none" onclick="selectChoice(this)"><div class="tile-icon">❌</div><div class="tile-main">No System</div><div class="tile-sub">Memory-based</div></div>
+        </div>
+        <div class="step-nav"><button class="btn-back" onclick="prevStep()">← BACK</button><button class="btn-next" onclick="showGate()" disabled>ANALYZE →</button></div>
+      </div>
+    </div>
+    <!-- /OLD STEPS -->
+    <div class="step-dots" id="stepDots"></div>
+  </div>
+
+  <div id="gate-section">
+    <div class="gate-card">
+      <div class="gate-heading">UNLOCK YOUR<br><span style="color:var(--amber)">FORENSIC REPORT</span></div>
+      <div class="gate-sub">
+        Your audit is ready. Verify your identity to access it.<br>
+        <em>We send a one-time code</em> to confirm your email.
+      </div>
+      <!-- Row 1: Full Name + Role -->
+      <div class="gate-row">
+        <div class="gate-field">
+          <div class="gate-label">Full Name <span class="req">*</span></div>
+          <input class="gate-input" id="g-name" type="text" placeholder="Ahmed Al-Mansouri" autocomplete="name" />
+          <div class="field-error" id="err-name"></div>
+        </div>
+        <div class="gate-field">
+          <div class="gate-label">Your Role <span class="req">*</span></div>
+          <div class="role-grid" id="role-grid">
+            <div class="role-tile" data-role="Owner / CEO" onclick="pickRole(this)">Owner / CEO</div>
+            <div class="role-tile" data-role="Director" onclick="pickRole(this)">Director</div>
+            <div class="role-tile" data-role="Sales Manager" onclick="pickRole(this)">Sales Mgr</div>
+            <div class="role-tile" data-role="Marketing" onclick="pickRole(this)">Marketing</div>
+            <div class="role-tile" data-role="Operations" onclick="pickRole(this)">Operations</div>
+            <div class="role-tile" data-role="Other" onclick="pickRole(this)">Other</div>
+          </div>
+          <div class="field-error" id="err-role"></div>
+        </div>
+      </div>
+      <!-- Row 2: Email + Send OTP -->
+      <div class="gate-row full" style="margin-bottom:8px;">
+        <div class="gate-field">
+          <div class="gate-label">Email <span class="req">*</span></div>
+          <div style="display:flex;gap:8px;align-items:flex-start;">
+            <input class="gate-input" id="g-email" type="email" placeholder="ahmed@example.com" autocomplete="email" style="flex:1" />
+            <button class="otp-send-btn" onclick="sendOTP()">SEND CODE</button>
+          </div>
+          <div class="field-error" id="err-email"></div>
+        </div>
+      </div>
+      <!-- Row 3: Mobile -->
+      <div class="gate-row full" style="margin-top:20px;">
+        <div class="gate-field">
+          <div class="gate-label">Mobile Number <span class="req">*</span></div>
+          <div class="phone-row">
+            <select class="country-select" id="g-code">
+              <option value="+971">🇦🇪 +971 UAE</option>
+              <option value="+966">🇸🇦 +966 KSA</option>
+              <option value="+974">🇶🇦 +974 Qatar</option>
+              <option value="+973">🇧🇭 +973 Bahrain</option>
+              <option value="+968">🇴🇲 +968 Oman</option>
+              <option value="+965">🇰🇼 +965 Kuwait</option>
+              <option value="+44">🇬🇧 +44 UK</option>
+              <option value="+1">🇺🇸 +1 USA/CA</option>
+              <option value="+91">🇮🇳 +91 India</option>
+              <option value="+92">🇵🇰 +92 Pakistan</option>
+              <option value="+20">🇪🇬 +20 Egypt</option>
+              <option value="+962">🇯🇴 +962 Jordan</option>
+              <option value="+961">🇱🇧 +961 Lebanon</option>
+              <option value="+90">🇹🇷 +90 Turkey</option>
+              <option value="+63">🇵🇭 +63 Philippines</option>
+            </select>
+            <input class="gate-input" id="g-mobile" type="tel" placeholder="50 123 4567" inputmode="numeric" style="flex:1" />
+          </div>
+          <div class="field-error" id="err-mobile"></div>
+        </div>
+      </div>
+      <!-- OTP -->
+      <div class="otp-area" id="otp-area">
+        <div class="otp-top">
+          <span class="otp-label-text">📧 Enter 6-Digit Code</span>
+          <span class="otp-timer" id="otp-timer"></span>
+        </div>
+        <div class="otp-boxes" id="otp-boxes">
+          <input class="otp-box" maxlength="1" type="text" inputmode="numeric" />
+          <input class="otp-box" maxlength="1" type="text" inputmode="numeric" />
+          <input class="otp-box" maxlength="1" type="text" inputmode="numeric" />
+          <input class="otp-box" maxlength="1" type="text" inputmode="numeric" />
+          <input class="otp-box" maxlength="1" type="text" inputmode="numeric" />
+          <input class="otp-box" maxlength="1" type="text" inputmode="numeric" />
+        </div>
+        <div class="otp-status" id="otp-status"></div>
+        <div class="otp-actions">
+          <span class="otp-resend" id="otp-resend" onclick="resendOTP()">Resend code</span>
+        </div>
+      </div>
+      <!-- Submit -->
+      <button class="gate-cta" id="gate-cta" onclick="submitGate()" disabled>▶️ ACCESS MY REPORT</button>
+      <p class="privacy-note">By continuing, you agree to our <a href="#">Privacy Policy</a>.</p>
+    </div>
+  </div>
+
+  <!-- ══════════ REPORT ══════════ -->
+  <div id="report-section">
+    <div class="panel-label">FORENSIC REPORT — SYSTEM OUTPUT</div>
+    <div id="status-banner" class="status-banner">
+      <div class="pulse"></div><span id="status-text"></span>
+    </div>
+    <div class="metric-grid">
+      <div class="metric-card">
+        <div class="metric-label">Annual Revenue Leak</div>
+        <div class="metric-value" id="m-annual">—</div>
+        <div class="metric-sub">AED / YEAR</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Monthly Leak</div>
+        <div class="metric-value" id="m-monthly">—</div>
+        <div class="metric-sub">AED / MONTH</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Admin Overhead</div>
+        <div class="metric-value" id="m-admin">—</div>
+        <div class="metric-sub">AED / MONTH</div>
+      </div>
+    </div>
+    <div class="report-block">
+      <h3>🔍 01 — The Financial Leak</h3>
+      <p id="leak-text"></p>
+      <div style="margin-top:20px" id="leak-rows"></div>
+    </div>
+    <div class="report-block">
+      <h3>📱 02 — The WhatsApp Grave</h3>
+      <p id="whatsapp-text"></p>
+      <div id="handover-warning"></div>
+    </div>
+    <div class="report-block">
+      <h3>🤖 03 — Agentic Solution (ROI)</h3>
+      <p id="roi-text"></p>
+      <div style="margin-top:20px" id="roi-rows"></div>
+    </div>
+    <button class="reset-btn" onclick="resetAll()">↩️ RUN NEW AUDIT</button>
+  </div>
+
+  <!-- Ticker -->
+  <div class="ticker">
+    <span> ◆ PRESSURE TEST ACTIVE &nbsp;&nbsp;&nbsp; ◆ UAE MARKET STANDARD: &lt;2 MIN RESPONSE &nbsp;&nbsp;&nbsp; ◆ EVERY HOUR OF DELAY = COMPETITOR DONATION &nbsp;&nbsp;&nbsp; ◆ AGENTIC CONCIERGE: 24/7/365 COVERAGE &nbsp;&nbsp;&nbsp; ◆ SYSTEMIC FRICTION DETECTED &nbsp;&nbsp;&nbsp; ◆ PRESSURE TEST ACTIVE &nbsp;&nbsp;&nbsp; ◆ UAE MARKET STANDARD: &lt;2 MIN RESPONSE &nbsp;&nbsp;&nbsp; ◆ EVERY HOUR OF DELAY = COMPETITOR DONATION &nbsp;&nbsp;&nbsp; ◆ AGENTIC CONCIERGE: 24/7/365 COVERAGE &nbsp;&nbsp;&nbsp; ◆ SYSTEMIC FRICTION DETECTED &nbsp;&nbsp;&nbsp; </span>
+  </div>
+</div><!-- /container -->
+
+<script>
+/* ══════════════════════════════════════ AUDIT WIZARD ══════════════════════════════════════ */
+const auditState = { client_name:'', total_leads:'', ghost_rate:'', avg_value:'', staff_count:'', response_range:'', handover:'' };
+const STEPS = [
+  { id:'client_name', label:'Business Info', question:"What's your business called?", hint:"This personalises your report.", type:'text', placeholder:'e.g. Al-Futtaim Clinic', suffix:null, required:true },
+  { id:'total_leads', label:'Lead Volume', question:"How many new enquiries do you get each month?", hint:"Count all channels — WhatsApp, Instagram, website, walk-ins, referrals.", type:'number', placeholder:'500', suffix:'ENQUIRIES / MONTH', required:true },
+  { id:'ghost_rate', label:'Drop-off Rate', question:"What % of those enquiries never get a follow-up?", hint:"How many people contact you but never hear back? <em>Most UAE businesses are 30–60%.</em>", type:'number', placeholder:'40', suffix:'% NEVER FOLLOWED UP', required:true, min:0, max:100 },
+  { id:'avg_value', label:'Customer Value', question:"What does a typical customer spend with you?", hint:"Average sale, project, treatment, or contract value in AED.", type:'number', placeholder:'1200', suffix:'AED PER CUSTOMER', required:true },
+  { id:'staff_count', label:'Team Size', question:"How many people handle leads and follow-ups?", hint:"Receptionists, coordinators, sales staff — anyone who chases or replies to enquiries.", type:'number', placeholder:'2', suffix:'TEAM MEMBERS', required:false },
+  { id:'response_range', label:'Response Speed', question:"How fast does your team typically reply to a new enquiry?", hint:"Be honest — this is the most important reading in the audit.", type:'choice', required:true, choices:[
+    { key:'fast', icon:'⚡️', main:'Under 5 minutes', sub:'We reply almost instantly' },
+    { key:'medium', icon:'🕐', main:'5 – 60 minutes', sub:'Usually within the hour' },
+    { key:'slow', icon:'📋', main:'1 – 4 hours', sub:'Same day, but not urgent' },
+    { key:'critical', icon:'🔴', main:'4+ hours / Next day', sub:'Depends on how busy we are' }
+  ]},
+  { id:'handover', label:'Lead Handover', question:"How do leads get passed between your team?", hint:"This determines your data security and compliance exposure.", type:'choice', required:true, choices:[
+    { key:'crm', icon:'🖥', main:'CRM System', sub:'HubSpot, Zoho, Salesforce…' },
+    { key:'email', icon:'📧', main:'Email / Spreadsheet', sub:'Shared inbox or Google Sheets' },
+    { key:'whatsapp', icon:'📲', main:'WhatsApp', sub:'Screenshots or group chats' },
+    { key:'verbal', icon:'🗣', main:'Word of mouth', sub:'We just tell each other' }
+  ]}
+];
+let currentStep = 0, goingBack = false;
+function renderStep() {
+  const step = STEPS[currentStep];
+  const total = STEPS.length;
+  const pct = Math.round(((currentStep + 1) / total) * 100);
+  document.getElementById('prog-label').textContent = `STEP ${currentStep + 1} OF ${total}`;
+  document.getElementById('prog-count').textContent = step.label;
+  document.getElementById('prog-fill').style.width = pct + '%';
+  const card = document.getElementById('step-card');
+  card.className = 'step-card' + (goingBack ? ' going-back' : '');
+  setTimeout(() => card.classList.remove('going-back'), 350);
+  let bodyHTML = '';
+  if (step.type !== 'choice') {
+    bodyHTML = `
+      <input class="step-input" id="main-input" type="${step.type}" placeholder="${step.placeholder}" value="${auditState[step.id]}" ${step.min !== undefined ? 'min="'+step.min+'"' : ''} ${step.max !== undefined ? 'max="'+step.max+'"' : ''} autocomplete="off" inputmode="${step.type === 'number' ? 'numeric' : 'text'}" />
+      ${step.suffix ? '<div class="input-suffix">'+step.suffix+'</div>' : ''}`;
+  } else {
+    bodyHTML = `<div class="choice-grid">` + step.choices.map(c => `
+      <div class="choice-tile ${auditState[step.id] === c.key ? 'selected' : ''}" onclick="selectChoice('${c.key}',this)">
+        <div class="tile-icon">${c.icon}</div>
+        <div class="tile-main">${c.main}</div>
+        <div class="tile-sub">${c.sub}</div>
+      </div>`).join('') + `</div>`;
+  }
+  const isLast = currentStep === total - 1;
+  card.innerHTML = `
+    <div class="step-question">${step.question}</div>
+    <div class="step-hint">${step.hint}</div>
+    ${bodyHTML}
+    <div class="step-nav">
+      ${currentStep > 0 ? '<button class="btn-back" onclick="prevStep()">← BACK</button>' : '<div></div>'}
+      <button class="btn-next" id="next-btn" onclick="nextStep()">${isLast ? '▶️ CONTINUE' : 'NEXT →'}</button>
+    </div>`;
+  if (step.type !== 'choice') setTimeout(() => { const i = document.getElementById('main-input'); if(i) i.focus(); }, 50);
+  card.onkeydown = e => { if (e.key === 'Enter' && step.type !== 'choice') nextStep(); };
+  updateNextBtn();
+}
+function selectChoice(key, el) {
+  auditState[STEPS[currentStep].id] = key;
+  el.closest('.choice-grid').querySelectorAll('.choice-tile').forEach(t => t.classList.remove('selected'));
+  el.classList.add('selected');
+  updateNextBtn();
+  setTimeout(() => nextStep(), 320);
+}
+function updateNextBtn() {
+  const btn = document.getElementById('next-btn');
+  if (!btn) return;
+  const step = STEPS[currentStep];
+  if (step.type === 'choice') {
+    btn.disabled = !auditState[step.id];
+  } else if (step.required) {
+    const inp = document.getElementById('main-input');
+    btn.disabled = !(inp && inp.value.trim());
+    if (inp) inp.addEventListener('input', () => btn.disabled = !inp.value.trim());
+  }
+}
+function nextStep() {
+  const step = STEPS[currentStep];
+  if (step.type !== 'choice') {
+    const inp = document.getElementById('main-input');
+    if (step.required && !(inp && inp.value.trim())) return;
+    auditState[step.id] = inp ? inp.value.trim() : '';
+  } else {
+    if (!auditState[step.id]) return;
+  }
+  goingBack = false;
+  if (currentStep < STEPS.length - 1) {
+    currentStep++;
+    renderStep();
+  } else showGate();
+}
+function prevStep() {
+  if (currentStep === 0) return;
+  goingBack = true;
+  currentStep--;
+  renderStep();
+}
+function showGate() {
+  document.getElementById('form-section').style.display = 'none';
+  document.getElementById('gate-section').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  checkGateCTA();
+}
+/* ══════════════════════════════════════ IDENTITY GATE ══════════════════════════════════════ */
+let selectedRole = '';
+let otpVerified = false;
+let generatedOTP = '';
+let otpTimer = null;
+let otpExpiry = 0;
+function pickRole(el) {
+  document.querySelectorAll('.role-tile').forEach(t => t.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedRole = el.dataset.role;
+  document.getElementById('err-role').textContent = '';
+  checkGateCTA();
+}
+function isWorkEmail(email) {
+  const freeProviders = ['gmail','yahoo','hotmail','outlook','icloud','aol','live','msn','me','mac','protonmail','ymail'];
+  const domain = email.split('@')[1];
+  if (!domain) return false;
+  const base = domain.split('.')[0].toLowerCase();
+  return !freeProviders.includes(base);
+}
+function checkGateCTA() {
+  const name = document.getElementById('g-name')?.value.trim() || '';
+  const email = document.getElementById('g-email')?.value.trim() || '';
+  const mobile = document.getElementById('g-mobile')?.value.trim() || '';
+  const btn = document.getElementById('gate-cta');
+  if (!btn) return;
+  const nameOk = name.length > 1;
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const mobileOk = mobile.replace(/\s/g,'').length >= 7;
+  const roleOk = selectedRole.length > 0;
+  const otpOk = otpVerified;
+  btn.disabled = !(nameOk && emailOk && mobileOk && roleOk && otpOk);
+}
+function onEmailInput() {
+  const email = document.getElementById('g-email').value.trim();
+  const btn = document.getElementById('otp-send-btn');
+  const err = document.getElementById('err-email');
+  const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  if (!email) {
+    err.textContent = '';
+    btn.disabled = true;
+    return;
+  }
+  if (!valid) {
+    err.textContent = 'Enter a valid email address.';
+    btn.disabled = true;
+    return;
+  }
+  err.textContent = '';
+  btn.disabled = false;
+}
+function generateCode() {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+function sendOTP() {
+  const email = document.getElementById('g-email').value.trim();
+  if (!email) return;
+  generatedOTP = generateCode();
+  otpVerified = false;
+  // In production → POST { email } to your API
+  console.log('[DEMO] OTP for ' + email + ': ' + generatedOTP);
+  document.getElementById('otp-area').style.display = 'block';
+  document.getElementById('otp-status').textContent = 'Code sent to ' + email;
+  document.getElementById('otp-status').className = 'otp-status ok';
+  // Clear boxes
+  document.querySelectorAll('.otp-box').forEach(b => {
+    b.value = '';
+    b.classList.remove('filled');
+  });
+  document.querySelectorAll('.otp-box')[0].focus();
+  startOtpTimer(600); // 10 min
+  document.getElementById('otp-send-btn').disabled = true;
+  checkGateCTA();
+}
+function resendOTP() {
+  sendOTP();
+  document.getElementById('otp-resend').style.display = 'none';
+}
+function startOtpTimer(seconds) {
+  clearInterval(otpTimer);
+  otpExpiry = Date.now() + seconds * 1000;
+  const timerEl = document.getElementById('otp-timer');
+  const resendEl = document.getElementById('otp-resend');
+  resendEl.style.display = 'none';
+  otpTimer = setInterval(() => {
+    const rem = Math.max(0, Math.round((otpExpiry - Date.now()) / 1000));
+    const m = String(Math.floor(rem / 60)).padStart(2, '0');
+    const s = String(rem % 60).padStart(2, '0');
+    timerEl.textContent = 'Expires in ' + m + ':' + s;
+    if (rem === 0) {
+      clearInterval(otpTimer);
+      timerEl.textContent = 'Code expired';
+      timerEl.className = 'otp-timer expired';
+      resendEl.style.display = 'inline';
+      document.getElementById('otp-send-btn').disabled = false;
+    }
+  }, 1000);
+}
+document.querySelectorAll('#otp-boxes .otp-box').forEach((box, idx, arr) => {
+  box.addEventListener('input', e => {
+    if(e.target.value) { e.target.classList.add('filled'); if(idx < arr.length - 1) arr[idx + 1].focus(); if(arr.every(b => b.value)) checkOTP(); }
+  });
+  box.addEventListener('keydown', e => { if(e.key === 'Backspace' && !e.target.value && idx > 0) arr[idx - 1].focus(); });
+});
+// OTP box behaviour
+document.addEventListener('DOMContentLoaded', () => {
+  const boxes = document.querySelectorAll('.otp-box');
+  // Role tile click handlers
+  document.querySelectorAll(".role-tile").forEach(tile => {
+    tile.addEventListener("click", function() {
+      pickRole(this);
+    });
+  });
+  boxes.forEach((box, i) => {
+    box.addEventListener('input', () => {
+      box.value = box.value.replace(/[^0-9]/g, '');
+      if (box.value) {
+        box.classList.add('filled');
+        if (boxes[i+1]) boxes[i+1].focus();
+      } else {
+        box.classList.remove('filled');
+      }
+      checkOTP();
+    });
+    box.addEventListener('keydown', e => {
+      if (e.key === 'Backspace' && !box.value && boxes[i-1]) {
+        boxes[i-1].focus();
+        boxes[i-1].value = '';
+        boxes[i-1].classList.remove('filled');
+      }
+    });
+    box.addEventListener('paste', e => {
+      e.preventDefault();
+      const paste = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '');
+      [...paste.slice(0,6)].forEach((ch, j) => {
+        if (boxes[i+j]) {
+          boxes[i+j].value = ch;
+          boxes[i+j].classList.add('filled');
+        }
+      });
+      if (boxes[Math.min(i + paste.length, 5)]) boxes[Math.min(i + paste.length, 5)].focus();
+      checkOTP();
+    });
+  });
+});
+function checkOTP() {
+  const entered = [...document.querySelectorAll('.otp-box')].map(b => b.value).join('');
+  if (entered.length < 6) return;
+  if (entered === generatedOTP) {
+    otpVerified = true;
+    document.getElementById('otp-status').textContent = '✓ Email verified successfully';
+    document.getElementById('otp-status').className = 'otp-status ok';
+    clearInterval(otpTimer);
+    document.getElementById('otp-timer').textContent = '✓ Verified';
+    document.getElementById('otp-timer').className = 'otp-timer';
+    document.getElementById('otp-timer').style.color = 'var(--green)';
+  } else if (entered.length === 6) {
+    document.getElementById('otp-status').textContent = '✗ Incorrect code. Please try again.';
+    document.getElementById('otp-status').className = 'otp-status err';
+    otpVerified = false;
+  }
+  checkGateCTA();
+}
+function isMobileValid() {
+  const m = document.getElementById('g-mobile').value.replace(/\s/g, '');
+  return m.length >= 7 && m.length <= 15;
+}
+function checkGateCTA() {
+  const nameOk = document.getElementById('g-name').value.trim().length >= 2;
+  const roleOk = !!selectedRole;
+  const emailOk = otpVerified;
+  const mobOk = isMobileValid();
+  document.getElementById('gate-cta').disabled = !(nameOk && roleOk && emailOk && mobOk);
+}
+document.getElementById('g-email')?.addEventListener('input', onEmailInput);
+document.getElementById('g-mobile')?.addEventListener('input', checkGateCTA);
+document.getElementById('g-name')?.addEventListener('input', checkGateCTA);
+function submitGate() {
+  // Validate everything one more time
+  const name = document.getElementById('g-name').value.trim();
+  const email = document.getElementById('g-email').value.trim();
+  const code = document.getElementById('g-code').value;
+  const mobile = document.getElementById('g-mobile').value.trim();
+  let valid = true;
+  if (name.length < 2) {
+    document.getElementById('err-name').textContent = 'Please enter your full name.';
+    valid = false;
+  }
+  if (!selectedRole) {
+    document.getElementById('err-role').textContent = 'Please select your role.';
+    valid = false;
+  }
+  if (!otpVerified) {
+    document.getElementById('err-email').textContent = 'Please verify your email first.';
+    valid = false;
+  }
+  if (!isMobileValid()) {
+    document.getElementById('err-mobile').textContent = 'Please enter a valid mobile number.';
+    valid = false;
+  }
+  if (!valid) return;
+  // In production → log lead to CRM/Sheets here
+  console.log('[LEAD]', { name, role: selectedRole, email, phone: code + ' ' + mobile, ...auditState });
+  generateReport();
+}
+/* ══════════════════════════════════════ REPORT GENERATION ══════════════════════════════════════ */
+function fmt(n) {
+  return Math.round(n).toLocaleString('en-AE');
+}
+function animateNumber(el, target) {
+  const dur = 1200, t0 = performance.now();
+  function tick(now) {
+    const p = Math.min((now - t0) / dur, 1);
+    const e = 1 - Math.pow(1 - p, 3);
+    el.textContent = fmt(Math.round(target * e));
+    if (p < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+function generateReport() {
+  const clientName = auditState.client_name || 'Your Business';
+  const totalLeads = parseFloat(auditState.total_leads) || 0;
+  const ghostRate = parseFloat(auditState.ghost_rate) || 0;
+  const avgValue = parseFloat(auditState.avg_value) || 0;
+  const staffCount = parseInt(auditState.staff_count) || 0;
+  const rRange = auditState.response_range;
+  const handover = auditState.handover;
+  const monthlyLeak = (totalLeads * (ghostRate / 100)) * avgValue;
+  const annualLeak = monthlyLeak * 12;
+  const adminCost = staffCount * 7500;
+  const silentAttrition = annualLeak * 0.1;
+  const ghostedLeads = Math.round(totalLeads * (ghostRate / 100));
+  let status, statusClass;
+  if (rRange === 'fast') {
+    status = '🟢 STABLE — PRESSURE NOMINAL';
+    statusClass = 'stable';
+  } else if (rRange === 'medium') {
+    status = '🟡 AT RISK — PRESSURE BUILDING';
+    statusClass = 'at-risk';
+  } else {
+    status = '🔴 CRITICAL FAILURE — SYSTEMIC BREACH';
+    statusClass = 'critical';
+  }
+  document.getElementById('status-banner').className = 'status-banner ' + statusClass;
+  document.getElementById('status-text').textContent = status;
+  setTimeout(() => {
+    animateNumber(document.getElementById('m-annual'), annualLeak);
+    animateNumber(document.getElementById('m-monthly'), monthlyLeak);
+    animateNumber(document.getElementById('m-admin'), adminCost);
+  }, 200);
+  const rLabel = { fast: 'under 5 minutes', medium: 'within the hour', slow: 'within 4 hours', critical: '4+ hours or next day' }[rRange];
+  document.getElementById('leak-text').innerHTML = 'Based on your data, <strong>' + clientName + '</strong> is losing <span class="highlight">' + fmt(annualLeak) + ' AED per year</span> through Systemic Friction — silent, invisible, and entirely preventable. Every month, <span class="highlight">' + ghostedLeads + ' qualified leads</span> enter your pipeline and vanish without a second touchpoint. This is not a sales problem. It is an <span class="red">infrastructure failure</span>.';
+  document.getElementById('leak-rows').innerHTML = '<div class="data-row"><span>Ghosted Leads / Month</span><span class="val">' + ghostedLeads + ' leads</span></div><div class="data-row"><span>Monthly Revenue Leak</span><span class="val">' + fmt(monthlyLeak) + ' AED</span></div><div class="data-row"><span>Annual Revenue Leak</span><span class="val">' + fmt(annualLeak) + ' AED</span></div><div class="data-row"><span>Silent Attrition Cost (10%)</span><span class="val">' + fmt(silentAttrition) + ' AED</span></div>';
+  document.getElementById('whatsapp-text').innerHTML = 'You reported that your team typically responds <span class="red">' + rLabel + '</span>. The UAE market standard is <span class="highlight">under 2 minutes</span>. Every hour of silence is a donation to your nearest competitor.<br><br>' + ghostRate + '% of your leads — real people who raised their hand — never receive a second touchpoint. Competitors with automated follow-up are capturing them <em>while you sleep</em>.';
+  let hw = '';
+  if (handover === 'whatsapp' || handover === 'verbal') {
+    hw = '<div class="warning-box">STRUCTURAL INTEGRITY WARNING: Your handover method ("' + (handover === 'whatsapp' ? 'WhatsApp' : 'Verbal / Informal') + '") creates audit gaps and may expose your business to UAE PDPL violations. Consumer messaging apps are not compliant data channels. Immediate remediation recommended.</div>';
+  }
+  document.getElementById('handover-warning').innerHTML = hw;
+  const annualAdminCost = adminCost * 12, agentCost = 2500;
+  const annualSavings = annualAdminCost - (agentCost * 12) + annualLeak;
+  document.getElementById('roi-text').innerHTML = 'Your current team costs <span class="red">' + fmt(adminCost) + ' AED/month (' + fmt(annualAdminCost) + ' AED/year)</span> in salaries, visa fees, and overhead — and still produces a ' + ghostRate + '% failure rate. A single AI Lead Concierge operates at <span class="highlight">~' + fmt(agentCost) + ' AED/month</span>, responds in under 10 seconds, never sleeps, and creates a full compliance audit trail.';
+  document.getElementById('roi-rows').innerHTML = '<div class="data-row"><span>Current Monthly Admin Overhead</span><span class="val red">' + fmt(adminCost) + ' AED</span></div><div class="data-row"><span>Agentic Solution Estimated Cost</span><span class="val green">~' + fmt(agentCost) + ' AED/month</span></div><div class="data-row"><span>Monthly Overhead Saving</span><span class="val green">+' + fmt(adminCost - agentCost) + ' AED</span></div><div class="data-row"><span>Recoverable Annual Revenue</span><span class="val green">+' + fmt(annualLeak) + ' AED</span></div><div class="data-row"><span>Total Annual ROI Opportunity</span><span class="val" style="font-size:18px;color:var(--amber)">' + fmt(annualSavings) + ' AED</span></div><div class="data-row"><span>Response Time: Human vs Agent</span><span class="val">' + rLabel + ' → &lt;10 sec</span></div><div class="data-row"><span>Coverage</span><span class="val green">24 / 7 / 365</span></div>';
+  document.getElementById('gate-section').style.display = 'none';
+  document.getElementById('report-section').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function resetAll() {
+  Object.keys(auditState).forEach(k => auditState[k] = '');
+  currentStep = 0;
+  goingBack = false;
+  selectedRole = '';
+  otpVerified = false;
+  generatedOTP = '';
+  clearInterval(otpTimer);
+  document.getElementById('form-section').style.display = 'block';
+  document.getElementById('gate-section').style.display = 'none';
+  document.getElementById('report-section').style.display = 'none';
+  renderStep();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+/* Init */
+renderStep();
+</script>
