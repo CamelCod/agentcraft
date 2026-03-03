@@ -49,7 +49,7 @@ export interface Resource {
 export interface Lead {
   email: string;
   name?: string;
-  source: 'Blog' | 'Analysis' | 'Resource';
+  source: 'Blog' | 'Analysis' | 'Resource' | 'Newsletter';
   resourceDownloaded?: string;
 }
 
