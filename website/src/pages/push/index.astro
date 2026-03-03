@@ -1,0 +1,267 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+
+const base = import.meta.env.BASE_URL;
+---
+
+<BaseLayout 
+  title="Subscribe | AgentCraft"
+  description="Stay ahead of the curve. Get the latest AI agent tutorials, market analysis, and exclusive resources delivered straight to your inbox."
+>
+  <Header />
+
+  <main class="min-h-screen bg-gray-50">
+    <!-- Hero Section -->
+    <section class="bg-gradient-to-br from-primary-600 via-purple-600 to-pink-600 text-white py-20">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div class="text-6xl mb-6">📬</div>
+        <h1 class="text-5xl md:text-6xl font-bold mb-6">
+          Stay Ahead of the Curve
+        </h1>
+        <p class="text-xl md:text-2xl opacity-90 mb-4 max-w-2xl mx-auto">
+          Join thousands of AI builders and automation experts getting the latest 
+          insights delivered straight to their inbox.
+        </p>
+        <p class="text-base opacity-75">
+          No spam. Unsubscribe anytime. We respect your privacy.
+        </p>
+      </div>
+    </section>
+
+    <!-- Benefits + Form Section -->
+    <section class="py-16">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+
+          <!-- Benefits -->
+          <div>
+            <h2 class="text-3xl font-bold mb-8">What you'll get</h2>
+            <div class="space-y-6">
+              <div class="flex items-start gap-4">
+                <div class="text-3xl flex-shrink-0">📚</div>
+                <div>
+                  <h3 class="text-xl font-semibold mb-1">In-Depth Tutorials</h3>
+                  <p class="text-gray-600">
+                    Step-by-step guides for building and deploying production-ready 
+                    AI agents, sent directly to you as they publish.
+                  </p>
+                </div>
+              </div>
+
+              <div class="flex items-start gap-4">
+                <div class="text-3xl flex-shrink-0">📊</div>
+                <div>
+                  <h3 class="text-xl font-semibold mb-1">Market Analysis</h3>
+                  <p class="text-gray-600">
+                    Curated research and expert insights on AI trends, emerging tools, 
+                    and industry best practices — before everyone else.
+                  </p>
+                </div>
+              </div>
+
+              <div class="flex items-start gap-4">
+                <div class="text-3xl flex-shrink-0">🔧</div>
+                <div>
+                  <h3 class="text-xl font-semibold mb-1">Exclusive Resources</h3>
+                  <p class="text-gray-600">
+                    Subscribers-only templates, checklists, and tools to accelerate 
+                    your agent development workflow.
+                  </p>
+                </div>
+              </div>
+
+              <div class="flex items-start gap-4">
+                <div class="text-3xl flex-shrink-0">🚀</div>
+                <div>
+                  <h3 class="text-xl font-semibold mb-1">Early Access</h3>
+                  <p class="text-gray-600">
+                    Be the first to know about new agent releases, community events, 
+                    and special announcements from the AgentCraft team.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Social Proof -->
+            <div class="mt-10 p-6 bg-white rounded-lg shadow-sm border border-gray-100">
+              <p class="text-gray-500 text-sm mb-4 font-medium uppercase tracking-wide">
+                Trusted by builders worldwide
+              </p>
+              <div class="flex flex-wrap gap-4">
+                <div class="flex items-center gap-2">
+                  <span class="text-2xl font-bold text-primary-600">1K+</span>
+                  <span class="text-gray-600 text-sm">Subscribers</span>
+                </div>
+                <div class="w-px bg-gray-200"></div>
+                <div class="flex items-center gap-2">
+                  <span class="text-2xl font-bold text-primary-600">Weekly</span>
+                  <span class="text-gray-600 text-sm">Digest</span>
+                </div>
+                <div class="w-px bg-gray-200"></div>
+                <div class="flex items-center gap-2">
+                  <span class="text-2xl font-bold text-primary-600">100%</span>
+                  <span class="text-gray-600 text-sm">Free</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Subscription Form -->
+          <div class="bg-white rounded-xl shadow-lg p-8 border border-gray-100">
+            <h2 class="text-2xl font-bold mb-2">Subscribe now</h2>
+            <p class="text-gray-600 mb-6">
+              Get your first issue in your inbox within the next 7 days.
+            </p>
+
+            <form id="push-subscribe-form" class="space-y-4" data-base-url={base}>
+              <div>
+                <label for="push-name" class="block text-sm font-medium text-gray-700 mb-1">
+                  Name <span class="text-gray-400">(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  id="push-name"
+                  name="name"
+                  placeholder="Your name"
+                  class="input"
+                />
+              </div>
+
+              <div>
+                <label for="push-email" class="block text-sm font-medium text-gray-700 mb-1">
+                  Email <span class="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  id="push-email"
+                  name="email"
+                  placeholder="you@example.com"
+                  required
+                  class="input"
+                />
+              </div>
+
+              <button
+                type="submit"
+                id="push-submit"
+                class="btn btn-primary w-full text-base py-3"
+                aria-busy="false"
+              >
+                <span id="push-button-text">Subscribe — It's Free</span>
+                <span id="push-button-loading" class="hidden">Subscribing...</span>
+              </button>
+
+              <div
+                id="push-message"
+                class="hidden text-center p-3 rounded-lg text-sm"
+                role="status"
+                aria-live="polite"
+              ></div>
+
+              <p class="text-xs text-gray-400 text-center">
+                By subscribing you agree to receive email updates from AgentCraft. 
+                Unsubscribe at any time.
+              </p>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- What Others Say Section -->
+    <section class="py-16 bg-white">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="text-3xl font-bold text-center mb-12">Why subscribe?</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div class="text-center p-6">
+            <div class="text-4xl mb-4">⚡</div>
+            <h3 class="text-lg font-semibold mb-2">Stay Current</h3>
+            <p class="text-gray-600 text-sm">
+              The AI landscape moves fast. Our curated digest keeps you informed 
+              without the noise.
+            </p>
+          </div>
+          <div class="text-center p-6">
+            <div class="text-4xl mb-4">🎯</div>
+            <h3 class="text-lg font-semibold mb-2">Actionable Insights</h3>
+            <p class="text-gray-600 text-sm">
+              Every issue is packed with practical takeaways you can apply 
+              to your projects immediately.
+            </p>
+          </div>
+          <div class="text-center p-6">
+            <div class="text-4xl mb-4">🌐</div>
+            <h3 class="text-lg font-semibold mb-2">Join the Community</h3>
+            <p class="text-gray-600 text-sm">
+              Connect with like-minded builders and automation enthusiasts 
+              from around the world.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</BaseLayout>
+
+<script>
+  const form = document.getElementById('push-subscribe-form') as HTMLFormElement;
+  const submitButton = document.getElementById('push-submit') as HTMLButtonElement;
+  const buttonText = document.getElementById('push-button-text') as HTMLElement;
+  const buttonLoading = document.getElementById('push-button-loading') as HTMLElement;
+  const message = document.getElementById('push-message') as HTMLElement;
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData(form);
+    const email = formData.get('email') as string;
+    const name = (formData.get('name') as string) || '';
+    const baseUrl = form.dataset.baseUrl || '';
+
+    submitButton.disabled = true;
+    submitButton.setAttribute('aria-busy', 'true');
+    buttonText.classList.add('hidden');
+    buttonLoading.classList.remove('hidden');
+    message.classList.add('hidden');
+
+    try {
+      const response = await fetch(`${baseUrl}api/subscribe`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          name,
+          source: 'Newsletter',
+          resourceDownloaded: ''
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        message.textContent = '✅ You\'re subscribed! Check your inbox for a welcome email.';
+        message.classList.remove('hidden', 'bg-red-100', 'text-red-700');
+        message.classList.add('bg-green-100', 'text-green-700');
+        form.reset();
+      } else {
+        throw new Error(data.error || 'Failed to subscribe');
+      }
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : '';
+      message.textContent = msg
+        ? `❌ ${msg}. Please check your email address and try again.`
+        : '❌ Unable to subscribe. Please check your email address and try again.';
+      message.classList.remove('hidden', 'bg-green-100', 'text-green-700');
+      message.classList.add('bg-red-100', 'text-red-700');
+    } finally {
+      submitButton.disabled = false;
+      submitButton.setAttribute('aria-busy', 'false');
+      buttonText.classList.remove('hidden');
+      buttonLoading.classList.add('hidden');
+    }
+  });
+</script>
