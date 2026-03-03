@@ -48,7 +48,9 @@ This repository includes the following agents:
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for a full step-by-step guide on how to fork, branch, commit, push, and open a pull request.
+
+Quick summary:
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
