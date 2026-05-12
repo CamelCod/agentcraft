@@ -1,0 +1,513 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+
+const base = import.meta.env.BASE_URL;
+---
+
+<BaseLayout
+  title="Brand Guidelines — AgentCraft"
+  description="AgentCraft brand identity, design system, voice, and guidelines for building with intelligent agents and automation."
+>
+  <Header />
+
+  <main>
+
+    <!-- ── Hero ─────────────────────────────────────────────────── -->
+    <section class="relative overflow-hidden bg-gradient-to-br from-primary-950 via-primary-900 to-purple-900 py-28 text-white">
+      <!-- background decoration -->
+      <div class="pointer-events-none absolute inset-0 opacity-10">
+        <div class="absolute -top-32 -right-32 h-96 w-96 rounded-full bg-primary-400 blur-3xl"></div>
+        <div class="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-purple-400 blur-3xl"></div>
+      </div>
+
+      <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div class="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm font-medium mb-6 backdrop-blur-sm">
+          <span class="h-2 w-2 rounded-full bg-green-400 animate-pulse"></span>
+          Brand &amp; Identity Guidelines
+        </div>
+
+        <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 leading-none">
+          Agent<span class="text-primary-300">Craft</span>
+        </h1>
+
+        <p class="text-xl md:text-2xl text-primary-200 max-w-3xl mx-auto mb-10 leading-relaxed">
+          We build intelligent agents and automation tools that bridge the gap
+          between AI theory and production reality — making powerful automation
+          accessible to every builder.
+        </p>
+
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <a href={`${base}`} class="btn btn-primary bg-white text-primary-900 hover:bg-primary-50">
+            Visit the Hub
+          </a>
+          <a
+            href="https://github.com/CamelCod/agentcraft"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="btn border-2 border-white/40 text-white hover:bg-white/10 backdrop-blur-sm"
+          >
+            View on GitHub
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Mission ───────────────────────────────────────────────── -->
+    <section class="py-20 bg-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          <div>
+            <p class="text-sm font-semibold text-primary-600 uppercase tracking-widest mb-3">Our Mission</p>
+            <h2 class="text-4xl font-bold mb-6">
+              Empowering builders with <span class="gradient-text">practical AI</span>
+            </h2>
+            <div class="space-y-4 text-gray-600 text-lg leading-relaxed">
+              <p>
+                AgentCraft exists because most AI content lives in the gap between
+                "here's the theory" and "here's how it runs in prod." We close that gap.
+              </p>
+              <p>
+                We ship real agent implementations, honest market analysis, and
+                battle-tested resources — all open-source and free to use.
+              </p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            {[
+              { icon: '🎯', label: 'Production-first', desc: 'Every example is built to run in the real world, not just notebooks.' },
+              { icon: '🔓', label: 'Open source', desc: 'All agent implementations are open-source and forkable on GitHub.' },
+              { icon: '⚡', label: 'Move fast', desc: 'We ship new agents, analysis, and resources every week.' },
+              { icon: '🤝', label: 'Community-driven', desc: 'Built with and for the builders who use it every day.' },
+            ].map(({ icon, label, desc }) => (
+              <div class="rounded-2xl border border-gray-100 bg-gray-50 p-5">
+                <div class="text-3xl mb-3">{icon}</div>
+                <h3 class="font-semibold text-gray-900 mb-1 text-base">{label}</h3>
+                <p class="text-sm text-gray-500">{desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── What We Do ────────────────────────────────────────────── -->
+    <section class="py-20 bg-gray-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-14">
+          <p class="text-sm font-semibold text-primary-600 uppercase tracking-widest mb-3">What We Do</p>
+          <h2 class="text-4xl font-bold">Four pillars of AgentCraft</h2>
+          <p class="text-gray-600 mt-4 max-w-2xl mx-auto text-lg">
+            Everything we build lives inside one of these four areas.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {[
+            {
+              icon: '📚',
+              color: 'from-blue-500 to-primary-600',
+              bg: 'bg-blue-50',
+              border: 'border-blue-100',
+              title: 'In-depth Tutorials',
+              desc: 'Step-by-step guides to building and deploying AI agents across every major stack — from LangChain to Make.com to raw API calls.',
+              items: ['Beginner to advanced coverage', 'Real code you can deploy', 'Updated as tooling evolves'],
+              href: `${base}blog`,
+              cta: 'Read the blog',
+            },
+            {
+              icon: '📊',
+              color: 'from-purple-500 to-pink-500',
+              bg: 'bg-purple-50',
+              border: 'border-purple-100',
+              title: 'Market Analysis',
+              desc: 'Expert research on AI agent tooling, automation platforms, and industry trends — so you can make confident architectural decisions.',
+              items: ['Tool comparisons & benchmarks', 'Trend forecasting', 'Cost & ROI analysis'],
+              href: `${base}analysis`,
+              cta: 'Browse analysis',
+            },
+            {
+              icon: '🔧',
+              color: 'from-emerald-500 to-teal-500',
+              bg: 'bg-emerald-50',
+              border: 'border-emerald-100',
+              title: 'Practical Resources',
+              desc: 'Templates, prompt libraries, architecture diagrams, and checklists that accelerate your agent projects from day one.',
+              items: ['Downloadable templates', 'Prompt engineering guides', 'Architecture blueprints'],
+              href: `${base}resources`,
+              cta: 'Get resources',
+            },
+            {
+              icon: '🤖',
+              color: 'from-orange-500 to-red-500',
+              bg: 'bg-orange-50',
+              border: 'border-orange-100',
+              title: 'Live Agent Deployments',
+              desc: 'Working agent integrations you can study, fork, or use directly — including our WhatsApp clinic automation built on Make.com.',
+              items: ['WhatsApp clinic bot', 'Make.com blueprints', 'End-to-end real deployments'],
+              href: `${base}clinic`,
+              cta: 'See the clinic bot',
+            },
+          ].map(({ icon, color, bg, border, title, desc, items, href, cta }) => (
+            <div class={`rounded-2xl border ${border} ${bg} p-8 flex flex-col`}>
+              <div class={`inline-flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br ${color} text-2xl mb-5 shadow-md`}>
+                {icon}
+              </div>
+              <h3 class="text-xl font-bold text-gray-900 mb-3">{title}</h3>
+              <p class="text-gray-600 mb-5 leading-relaxed flex-1">{desc}</p>
+              <ul class="space-y-2 mb-6">
+                {items.map(item => (
+                  <li class="flex items-center gap-2 text-sm text-gray-700">
+                    <span class="text-primary-600 font-bold">✓</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <a href={href} class="btn btn-primary self-start text-sm px-5 py-2.5">
+                {cta} →
+              </a>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Brand Identity ─────────────────────────────────────────── -->
+    <section class="py-20 bg-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-14">
+          <p class="text-sm font-semibold text-primary-600 uppercase tracking-widest mb-3">Brand Identity</p>
+          <h2 class="text-4xl font-bold">Visual language</h2>
+          <p class="text-gray-600 mt-4 max-w-2xl mx-auto text-lg">
+            Consistent visuals build trust. Here's the kit.
+          </p>
+        </div>
+
+        <!-- Logo -->
+        <div class="mb-16">
+          <h3 class="text-xl font-bold mb-6 text-gray-900">Logo & Wordmark</h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Primary on light -->
+            <div class="rounded-2xl border border-gray-100 bg-gray-50 p-10 flex flex-col items-center gap-4">
+              <div class="flex items-center gap-2">
+                <span class="text-3xl">🤖</span>
+                <span class="text-2xl font-extrabold">
+                  Agent<span class="gradient-text">Craft</span>
+                </span>
+              </div>
+              <p class="text-xs text-gray-400 font-medium uppercase tracking-wide">Primary — on light</p>
+            </div>
+            <!-- Reversed on dark -->
+            <div class="rounded-2xl bg-primary-950 p-10 flex flex-col items-center gap-4">
+              <div class="flex items-center gap-2">
+                <span class="text-3xl">🤖</span>
+                <span class="text-2xl font-extrabold text-white">
+                  Agent<span class="text-primary-300">Craft</span>
+                </span>
+              </div>
+              <p class="text-xs text-primary-400 font-medium uppercase tracking-wide">Reversed — on dark</p>
+            </div>
+            <!-- Icon only -->
+            <div class="rounded-2xl border border-gray-100 bg-white p-10 flex flex-col items-center gap-4 shadow-sm">
+              <div class="h-16 w-16 rounded-2xl bg-gradient-to-br from-primary-600 to-purple-600 flex items-center justify-center text-3xl shadow-lg">
+                🤖
+              </div>
+              <p class="text-xs text-gray-400 font-medium uppercase tracking-wide">Icon mark</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Colors -->
+        <div class="mb-16">
+          <h3 class="text-xl font-bold mb-6 text-gray-900">Color Palette</h3>
+
+          <div class="mb-8">
+            <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Primary — Sky Blue</p>
+            <div class="flex rounded-2xl overflow-hidden shadow-sm border border-gray-100">
+              {[
+                { shade: '50',  hex: '#f0f9ff', text: 'text-gray-700' },
+                { shade: '100', hex: '#e0f2fe', text: 'text-gray-700' },
+                { shade: '200', hex: '#bae6fd', text: 'text-gray-700' },
+                { shade: '300', hex: '#7dd3fc', text: 'text-gray-700' },
+                { shade: '400', hex: '#38bdf8', text: 'text-gray-700' },
+                { shade: '500', hex: '#0ea5e9', text: 'text-white' },
+                { shade: '600', hex: '#0284c7', text: 'text-white' },
+                { shade: '700', hex: '#0369a1', text: 'text-white' },
+                { shade: '800', hex: '#075985', text: 'text-white' },
+                { shade: '900', hex: '#0c4a6e', text: 'text-white' },
+                { shade: '950', hex: '#082f49', text: 'text-white' },
+              ].map(({ shade, hex, text }) => (
+                <div class="flex-1 py-8 px-2 flex flex-col items-center gap-1" style={`background:${hex}`}>
+                  <span class={`text-xs font-bold ${text}`}>{shade}</span>
+                  <span class={`text-xs font-mono ${text} opacity-70 hidden lg:block`}>{hex}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              { name: 'Brand Blue', hex: '#0284c7', label: 'primary-600', desc: 'CTAs, links, key highlights', bg: 'bg-primary-600' },
+              { name: 'Deep Navy', hex: '#082f49', label: 'primary-950', desc: 'Hero backgrounds, dark sections', bg: 'bg-primary-950' },
+              { name: 'Accent Purple', hex: '#9333ea', label: 'purple-600', desc: 'Gradient pair, tags, accents', bg: 'bg-purple-600' },
+            ].map(({ name, hex, label, desc, bg }) => (
+              <div class="rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
+                <div class={`${bg} h-24`}></div>
+                <div class="p-4">
+                  <p class="font-semibold text-gray-900">{name}</p>
+                  <p class="text-xs font-mono text-gray-400 mb-1">{hex} &nbsp;·&nbsp; {label}</p>
+                  <p class="text-sm text-gray-500">{desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <!-- Typography -->
+        <div>
+          <h3 class="text-xl font-bold mb-6 text-gray-900">Typography</h3>
+          <div class="rounded-2xl border border-gray-100 bg-gray-50 p-8 space-y-6">
+            <div class="flex items-baseline gap-6 flex-wrap">
+              <div class="min-w-[140px]">
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Typeface</p>
+                <p class="font-semibold text-gray-700">Inter</p>
+              </div>
+              <div class="flex-1">
+                <p class="text-5xl font-extrabold text-gray-900 leading-none">Aa</p>
+                <p class="text-sm text-gray-400 mt-1">Regular · Medium · SemiBold · Bold · ExtraBold</p>
+              </div>
+            </div>
+
+            <div class="border-t border-gray-200 pt-6 space-y-4">
+              {[
+                { label: 'Display / H1', sample: 'Build Intelligent Agents', cls: 'text-4xl font-extrabold', meta: 'text-4xl–6xl · ExtraBold 800' },
+                { label: 'Heading / H2', sample: 'Four pillars of AgentCraft', cls: 'text-3xl font-bold', meta: 'text-3xl–4xl · Bold 700' },
+                { label: 'Subheading / H3', sample: 'In-depth Tutorials', cls: 'text-xl font-bold', meta: 'text-xl–2xl · Bold 700' },
+                { label: 'Body', sample: 'Production-ready examples that run in the real world, not just notebooks.', cls: 'text-base text-gray-600', meta: 'text-base · Regular 400' },
+                { label: 'Caption / Label', sample: 'BRAND GUIDELINES · UPPERCASE', cls: 'text-xs font-semibold tracking-widest text-primary-600 uppercase', meta: 'text-xs · SemiBold 600 · tracking-widest' },
+              ].map(({ label, sample, cls, meta }) => (
+                <div class="flex items-baseline gap-6 flex-wrap">
+                  <p class="text-xs text-gray-400 w-32 shrink-0 pt-1">{label}</p>
+                  <div class="flex-1">
+                    <p class={cls}>{sample}</p>
+                    <p class="text-xs text-gray-300 mt-0.5 font-mono">{meta}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Design Principles ──────────────────────────────────────── -->
+    <section class="py-20 bg-gradient-to-br from-primary-50 via-purple-50 to-pink-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-14">
+          <p class="text-sm font-semibold text-primary-600 uppercase tracking-widest mb-3">Design Principles</p>
+          <h2 class="text-4xl font-bold">How we build things</h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {[
+            {
+              num: '01',
+              title: 'Clarity over cleverness',
+              desc: 'Every UI decision should reduce cognitive load, not show off. If a user has to think about how to use it, we redesign it.',
+            },
+            {
+              num: '02',
+              title: 'Content is the hero',
+              desc: 'Tutorials, analysis, and resources are the product. The design exists to present content — never compete with it.',
+            },
+            {
+              num: '03',
+              title: 'Progressive disclosure',
+              desc: 'Show the most important thing first. Surface detail only when the user asks for it. Respect attention.',
+            },
+            {
+              num: '04',
+              title: 'Mobile-first, always',
+              desc: 'Every component is designed at 375px and scaled up — never the other way round.',
+            },
+            {
+              num: '05',
+              title: 'Accessible by default',
+              desc: 'Sufficient color contrast, semantic HTML, keyboard navigation, and screen-reader-friendly markup are non-negotiable.',
+            },
+            {
+              num: '06',
+              title: 'Ship, then refine',
+              desc: 'A good thing shipped beats a perfect thing in draft. We iterate in public.',
+            },
+          ].map(({ num, title, desc }) => (
+            <div class="bg-white rounded-2xl p-7 shadow-sm border border-white/80">
+              <p class="text-5xl font-extrabold text-gray-100 leading-none mb-4">{num}</p>
+              <h3 class="text-lg font-bold text-gray-900 mb-2">{title}</h3>
+              <p class="text-gray-600 text-sm leading-relaxed">{desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Voice & Tone ────────────────────────────────────────────── -->
+    <section class="py-20 bg-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-14">
+          <p class="text-sm font-semibold text-primary-600 uppercase tracking-widest mb-3">Voice &amp; Tone</p>
+          <h2 class="text-4xl font-bold">How we sound</h2>
+          <p class="text-gray-600 mt-4 max-w-2xl mx-auto text-lg">
+            AgentCraft sounds like a senior engineer who genuinely wants to help — direct, warm, and no fluff.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-10 mb-12">
+          <!-- Do -->
+          <div class="rounded-2xl border border-emerald-100 bg-emerald-50 p-8">
+            <div class="flex items-center gap-2 mb-6">
+              <span class="h-6 w-6 rounded-full bg-emerald-500 text-white text-xs font-bold flex items-center justify-center">✓</span>
+              <h3 class="font-bold text-emerald-800 text-lg">We do say</h3>
+            </div>
+            <ul class="space-y-4">
+              {[
+                { label: 'Direct', text: '"Here\'s how to connect WhatsApp to your CRM in 20 minutes."' },
+                { label: 'Specific', text: '"Use Make.com module 7 to handle the webhook — it retries automatically."' },
+                { label: 'Honest', text: '"This approach works, but it will break if your payload exceeds 5 MB."' },
+                { label: 'Encouraging', text: '"You\'ve got the hard part done — the next step is just wiring it up."' },
+              ].map(({ label, text }) => (
+                <li>
+                  <span class="text-xs font-semibold text-emerald-600 uppercase tracking-wide">{label}</span>
+                  <p class="text-gray-700 text-sm mt-0.5 italic">"{text}"</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <!-- Don't -->
+          <div class="rounded-2xl border border-red-100 bg-red-50 p-8">
+            <div class="flex items-center gap-2 mb-6">
+              <span class="h-6 w-6 rounded-full bg-red-400 text-white text-xs font-bold flex items-center justify-center">✕</span>
+              <h3 class="font-bold text-red-800 text-lg">We don't say</h3>
+            </div>
+            <ul class="space-y-4">
+              {[
+                { label: 'Vague', text: '"Leverage synergistic AI capabilities to unlock transformative value."' },
+                { label: 'Hypey', text: '"Revolutionary platform that will change EVERYTHING about how you work!"' },
+                { label: 'Condescending', text: '"Simply just follow these easy steps and you\'ll be done in no time."' },
+                { label: 'Passive', text: '"It can sometimes be the case that errors may potentially occur."' },
+              ].map(({ label, text }) => (
+                <li>
+                  <span class="text-xs font-semibold text-red-500 uppercase tracking-wide">{label}</span>
+                  <p class="text-gray-500 text-sm mt-0.5 italic line-through">{text}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        <!-- Traits summary -->
+        <div class="flex flex-wrap justify-center gap-3">
+          {['Expert', 'Direct', 'Practical', 'Honest', 'Encouraging', 'Open-source mindset', 'No buzzwords', 'Builder-to-builder'].map(trait => (
+            <span class="px-4 py-2 rounded-full bg-primary-50 text-primary-700 text-sm font-medium border border-primary-100">
+              {trait}
+            </span>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- ── UI Components Showcase ─────────────────────────────────── -->
+    <section class="py-20 bg-gray-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-14">
+          <p class="text-sm font-semibold text-primary-600 uppercase tracking-widest mb-3">Component Kit</p>
+          <h2 class="text-4xl font-bold">Building blocks</h2>
+          <p class="text-gray-600 mt-4 max-w-2xl mx-auto text-lg">
+            The reusable components that make up every AgentCraft page.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+          <!-- Buttons -->
+          <div class="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm">
+            <h3 class="font-bold text-gray-900 mb-5">Buttons</h3>
+            <div class="flex flex-wrap gap-3">
+              <a href="#" class="btn btn-primary">Primary</a>
+              <a href="#" class="btn btn-outline">Outline</a>
+              <a href="#" class="btn btn-secondary">Secondary</a>
+              <a href="#" class="btn bg-gradient-to-r from-primary-600 to-purple-600 text-white shadow-lg hover:shadow-xl">Gradient</a>
+            </div>
+          </div>
+
+          <!-- Tags & Badges -->
+          <div class="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm">
+            <h3 class="font-bold text-gray-900 mb-5">Tags &amp; Badges</h3>
+            <div class="flex flex-wrap gap-2">
+              {['AI Agents', 'Make.com', 'WhatsApp', 'Automation', 'Tutorial', 'Analysis', 'Open Source'].map(tag => (
+                <span class="px-2.5 py-1 rounded-full bg-primary-100 text-primary-700 text-xs font-semibold">{tag}</span>
+              ))}
+            </div>
+          </div>
+
+          <!-- Card -->
+          <div class="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm">
+            <h3 class="font-bold text-gray-900 mb-5">Card</h3>
+            <div class="card p-5">
+              <div class="text-3xl mb-3">🤖</div>
+              <h4 class="font-bold text-gray-900 mb-1">WhatsApp Clinic Bot</h4>
+              <p class="text-sm text-gray-500 mb-3">Automates patient intake, appointment booking, and follow-ups via WhatsApp.</p>
+              <a href={`${base}clinic`} class="text-sm font-semibold text-primary-600 hover:text-primary-700">View demo →</a>
+            </div>
+          </div>
+
+          <!-- Form Input -->
+          <div class="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm">
+            <h3 class="font-bold text-gray-900 mb-5">Form Input</h3>
+            <div class="space-y-3">
+              <input type="email" placeholder="your@email.com" class="input" />
+              <button class="btn btn-primary w-full">Subscribe to updates</button>
+              <p class="text-xs text-gray-400 text-center">No spam. Unsubscribe anytime.</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ── CTA ────────────────────────────────────────────────────── -->
+    <section class="py-24 bg-gradient-to-br from-primary-950 via-primary-900 to-purple-900 text-white">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <p class="text-sm font-semibold text-primary-300 uppercase tracking-widest mb-4">Ready to build?</p>
+        <h2 class="text-4xl md:text-5xl font-extrabold mb-6 leading-tight">
+          Start building <span class="text-primary-300">intelligent agents</span> today
+        </h2>
+        <p class="text-primary-200 text-xl mb-10 max-w-2xl mx-auto">
+          Explore tutorials, grab a resource, or fork an agent from GitHub — everything is free and open-source.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <a href={`${base}blog`} class="btn bg-white text-primary-900 hover:bg-primary-50 shadow-lg hover:shadow-xl">
+            📚 Read the blog
+          </a>
+          <a href={`${base}resources`} class="btn border-2 border-white/30 text-white hover:bg-white/10">
+            🎁 Free resources
+          </a>
+          <a
+            href="https://github.com/CamelCod/agentcraft"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="btn border-2 border-white/30 text-white hover:bg-white/10"
+          >
+            💻 GitHub
+          </a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <Footer />
+</BaseLayout>
