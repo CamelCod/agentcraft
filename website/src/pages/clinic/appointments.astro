@@ -1,0 +1,66 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ClinicNav from '../../components/clinic/ClinicNav.astro';
+import AppointmentTable from '../../components/clinic/AppointmentTable.astro';
+import StatsCard from '../../components/clinic/StatsCard.astro';
+import { fetchAppointments } from '../../lib/sheets';
+
+const appointments = await fetchAppointments();
+
+const total = appointments.length;
+const scheduled = appointments.filter(a => a.status === 'Scheduled').length;
+const completed = appointments.filter(a => a.status === 'Completed').length;
+const noShows = appointments.filter(a => a.status === 'No-show').length;
+const noShowRate = total > 0 ? Math.round((noShows / total) * 100) : 0;
+const ratings = appointments.filter(a => a.feedback_rating !== null).map(a => a.feedback_rating as number);
+const avgRating = ratings.length > 0 ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1) : '—';
+---
+
+<BaseLayout title="Appointments — Clinic CRM">
+  <div class="clinic-shell">
+    <ClinicNav />
+    <main class="clinic-main">
+      <header class="page-header">
+        <h1>Appointments</h1>
+        <p class="page-subtitle">All bookings and their current status</p>
+      </header>
+
+      <div class="stats-grid">
+        <StatsCard label="Total Bookings" value={total} icon="📋" color="blue" />
+        <StatsCard label="Scheduled" value={scheduled} icon="📅" color="purple" />
+        <StatsCard label="Completed" value={completed} icon="✅" color="green" />
+        <StatsCard label="No-show Rate" value={`${noShowRate}%`} icon="⚠️" color={noShowRate > 20 ? 'red' : 'yellow'} />
+        <StatsCard label="Avg Rating" value={avgRating} icon="⭐" color="green" />
+      </div>
+
+      <section class="content-section">
+        <AppointmentTable appointments={appointments} />
+      </section>
+    </main>
+  </div>
+</BaseLayout>
+
+<script>
+  (function() {
+    const PIN = '1234';
+    const STORAGE_KEY = 'clinic_pin_ok';
+    if (localStorage.getItem(STORAGE_KEY) !== 'true') {
+      const entered = prompt('Enter clinic PIN:');
+      if (entered !== PIN) {
+        document.body.innerHTML = '<p style="padding:40px;color:#ef4444;">Access denied.</p>';
+        return;
+      }
+      localStorage.setItem(STORAGE_KEY, 'true');
+    }
+  })();
+</script>
+
+<style>
+  .clinic-shell { display: flex; min-height: 100vh; background: #f1f5f9; }
+  .clinic-main { flex: 1; padding: 32px; overflow-x: hidden; }
+  .page-header { margin-bottom: 24px; }
+  .page-header h1 { font-size: 1.5rem; font-weight: 700; color: #1e293b; margin: 0; }
+  .page-subtitle { color: #64748b; font-size: 0.875rem; margin: 4px 0 0; }
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
+  .content-section { background: transparent; }
+</style>

@@ -1,0 +1,91 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ClinicNav from '../../components/clinic/ClinicNav.astro';
+import PatientCard from '../../components/clinic/PatientCard.astro';
+import StatsCard from '../../components/clinic/StatsCard.astro';
+import { fetchPatients, fetchAppointments, LANG_FLAGS } from '../../lib/sheets';
+
+const [patients, appointments] = await Promise.all([fetchPatients(), fetchAppointments()]);
+
+const countByPhone: Record<string, number> = {};
+for (const apt of appointments) {
+  countByPhone[apt.patient_phone] = (countByPhone[apt.patient_phone] ?? 0) + 1;
+}
+
+const langCounts: Record<string, number> = {};
+for (const p of patients) {
+  langCounts[p.lang] = (langCounts[p.lang] ?? 0) + 1;
+}
+const topLang = Object.entries(langCounts).sort((a, b) => b[1] - a[1])[0];
+const topLangDisplay = topLang ? `${LANG_FLAGS[topLang[0]] ?? ''} ${topLang[1]}` : '—';
+---
+
+<BaseLayout title="Patients — Clinic CRM">
+  <div class="clinic-shell">
+    <ClinicNav />
+    <main class="clinic-main">
+      <header class="page-header">
+        <h1>Patients</h1>
+        <p class="page-subtitle">Registered patients and their session status</p>
+      </header>
+
+      <div class="stats-grid">
+        <StatsCard label="Total Patients" value={patients.length} icon="👥" color="blue" />
+        <StatsCard label="Active Sessions" value={patients.filter(p => p.state && p.state !== '').length} icon="💬" color="yellow" />
+        <StatsCard label="Top Language" value={topLangDisplay} icon="🌐" color="purple" />
+      </div>
+
+      <div class="search-bar">
+        <input id="patient-search" type="search" placeholder="Search by name or phone..." class="search-input" />
+      </div>
+
+      <div class="patients-grid" id="patients-grid">
+        {patients.map(patient => (
+          <div class="patient-item"
+               data-search={`${patient.patient_name} ${patient.phone}`.toLowerCase()}>
+            <PatientCard patient={patient} appointmentCount={countByPhone[patient.phone] ?? 0} />
+          </div>
+        ))}
+        {patients.length === 0 && (
+          <p class="empty-state">No patients yet. Configure your Google Sheets API key to load data.</p>
+        )}
+      </div>
+    </main>
+  </div>
+</BaseLayout>
+
+<script>
+  (function() {
+    const PIN = '1234';
+    if (localStorage.getItem('clinic_pin_ok') !== 'true') {
+      const entered = prompt('Enter clinic PIN:');
+      if (entered !== PIN) {
+        document.body.innerHTML = '<p style="padding:40px;color:#ef4444;">Access denied.</p>';
+        return;
+      }
+      localStorage.setItem('clinic_pin_ok', 'true');
+    }
+  })();
+
+  document.getElementById('patient-search')?.addEventListener('input', (e) => {
+    const q = (e.target as HTMLInputElement).value.toLowerCase();
+    document.querySelectorAll('.patient-item').forEach(el => {
+      const item = el as HTMLElement;
+      (item.style.display = !q || (item.dataset.search ?? '').includes(q) ? '' : 'none');
+    });
+  });
+</script>
+
+<style>
+  .clinic-shell { display: flex; min-height: 100vh; background: #f1f5f9; }
+  .clinic-main { flex: 1; padding: 32px; overflow-x: hidden; }
+  .page-header { margin-bottom: 24px; }
+  .page-header h1 { font-size: 1.5rem; font-weight: 700; color: #1e293b; margin: 0; }
+  .page-subtitle { color: #64748b; font-size: 0.875rem; margin: 4px 0 0; }
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .search-bar { margin-bottom: 20px; }
+  .search-input { padding: 8px 14px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.875rem; width: 280px; outline: none; }
+  .search-input:focus { border-color: #6366f1; }
+  .patients-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+  .empty-state { grid-column: 1/-1; padding: 40px; text-align: center; color: #94a3b8; background: #fff; border-radius: 10px; }
+</style>

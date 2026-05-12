@@ -1,0 +1,661 @@
+{
+  "name": "Clinic Bot — Scheduled Reminders",
+  "flow": [
+    {
+      "id": 1,
+      "module": "google-sheets:filterRows",
+      "version": 2,
+      "mapper": {},
+      "parameters": {
+        "mode": "map",
+        "limit": 1,
+        "sheetId": "Config",
+        "__IMTCONN__": 7231941,
+        "spreadsheetId": "REPLACE_WITH_SPREADSHEET_ID",
+        "tableFirstRow": "A1:Z1",
+        "includesHeaders": true
+      },
+      "metadata": {
+        "designer": { "x": -600, "y": 0 },
+        "restore": {
+          "parameters": {
+            "mode": { "label": "Enter manually" },
+            "__IMTCONN__": {
+              "data": { "scoped": "true", "connection": "google" },
+              "label": "My Google connection (aihamalhawar@gmail.com)"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "module": "builtin:BasicRouter",
+      "version": 1,
+      "mapper": {},
+      "parameters": {},
+      "metadata": {
+        "designer": { "x": -300, "y": 0 },
+        "restore": {}
+      },
+      "routes": [
+        {
+          "flow": [
+            {
+              "id": 3,
+              "module": "google-sheets:filterRows",
+              "version": 2,
+              "mapper": {},
+              "parameters": {
+                "mode": "map",
+                "limit": 50,
+                "sheetId": "Appointments",
+                "__IMTCONN__": 7231941,
+                "spreadsheetId": "REPLACE_WITH_SPREADSHEET_ID",
+                "tableFirstRow": "A1:Z1",
+                "includesHeaders": true
+              },
+              "metadata": {
+                "designer": { "x": 0, "y": -800 },
+                "restore": {
+                  "parameters": {
+                    "mode": { "label": "Enter manually" },
+                    "__IMTCONN__": {
+                      "data": { "scoped": "true", "connection": "google" },
+                      "label": "My Google connection (aihamalhawar@gmail.com)"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "id": 4,
+              "filter": {
+                "name": "24h: Scheduled + reminder not sent + date in [now+23h, now+25h]",
+                "conditions": [
+                  [
+                    { "a": "{{3.G}}", "b": "Scheduled", "o": "text:equal" },
+                    { "a": "{{3.I}}", "b": "FALSE", "o": "text:equal" }
+                  ]
+                ]
+              },
+              "module": "whatsapp-business-cloud:sendTemplateMessage",
+              "version": 1,
+              "mapper": {
+                "fromId": "REPLACE_WITH_PHONE_NUMBER_ID",
+                "to": "{{3.B}}",
+                "templateName": "clinic_reminder_24h",
+                "languageCode": "{{3.H}}",
+                "components": [
+                  {
+                    "type": "body",
+                    "parameters": [
+                      { "type": "text", "text": "{{3.C}}" },
+                      { "type": "text", "text": "{{3.D}}" },
+                      { "type": "text", "text": "{{3.F}}" }
+                    ]
+                  }
+                ]
+              },
+              "parameters": { "__IMTCONN__": 14088540 },
+              "metadata": {
+                "designer": { "x": 300, "y": -800 },
+                "restore": {
+                  "parameters": {
+                    "__IMTCONN__": {
+                      "data": { "scoped": "true", "connection": "whatsapp-business-cloud" },
+                      "label": "My WhatsApp Business Cloud connection"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "id": 5,
+              "module": "google-sheets:updateRow",
+              "version": 2,
+              "mapper": { "I": "TRUE" },
+              "parameters": {
+                "mode": "map",
+                "sheetId": "Appointments",
+                "rowNumber": "{{3.rowNumber}}",
+                "__IMTCONN__": 7231941,
+                "spreadsheetId": "REPLACE_WITH_SPREADSHEET_ID",
+                "tableFirstRow": "A1:Z1",
+                "includesHeaders": true,
+                "valueInputOption": "USER_ENTERED"
+              },
+              "metadata": {
+                "designer": { "x": 600, "y": -800 },
+                "restore": {
+                  "parameters": {
+                    "mode": { "label": "Enter manually" },
+                    "__IMTCONN__": {
+                      "data": { "scoped": "true", "connection": "google" },
+                      "label": "My Google connection (aihamalhawar@gmail.com)"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "flow": [
+            {
+              "id": 6,
+              "module": "google-sheets:filterRows",
+              "version": 2,
+              "mapper": {},
+              "parameters": {
+                "mode": "map",
+                "limit": 50,
+                "sheetId": "Appointments",
+                "__IMTCONN__": 7231941,
+                "spreadsheetId": "REPLACE_WITH_SPREADSHEET_ID",
+                "tableFirstRow": "A1:Z1",
+                "includesHeaders": true
+              },
+              "metadata": {
+                "designer": { "x": 0, "y": -400 },
+                "restore": {
+                  "parameters": {
+                    "mode": { "label": "Enter manually" },
+                    "__IMTCONN__": {
+                      "data": { "scoped": "true", "connection": "google" },
+                      "label": "My Google connection (aihamalhawar@gmail.com)"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "id": 7,
+              "filter": {
+                "name": "2h: Scheduled + 2h reminder not sent + date in [now+1h45m, now+2h15m]",
+                "conditions": [
+                  [
+                    { "a": "{{6.G}}", "b": "Scheduled", "o": "text:equal" },
+                    { "a": "{{6.J}}", "b": "FALSE", "o": "text:equal" }
+                  ]
+                ]
+              },
+              "module": "whatsapp-business-cloud:sendTemplateMessage",
+              "version": 1,
+              "mapper": {
+                "fromId": "REPLACE_WITH_PHONE_NUMBER_ID",
+                "to": "{{6.B}}",
+                "templateName": "clinic_reminder_2h",
+                "languageCode": "{{6.H}}",
+                "components": [
+                  {
+                    "type": "body",
+                    "parameters": [
+                      { "type": "text", "text": "{{6.C}}" },
+                      { "type": "text", "text": "{{6.D}}" },
+                      { "type": "text", "text": "{{6.F}}" }
+                    ]
+                  }
+                ]
+              },
+              "parameters": { "__IMTCONN__": 14088540 },
+              "metadata": {
+                "designer": { "x": 300, "y": -400 },
+                "restore": {
+                  "parameters": {
+                    "__IMTCONN__": {
+                      "data": { "scoped": "true", "connection": "whatsapp-business-cloud" },
+                      "label": "My WhatsApp Business Cloud connection"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "id": 8,
+              "module": "google-sheets:updateRow",
+              "version": 2,
+              "mapper": { "J": "TRUE" },
+              "parameters": {
+                "mode": "map",
+                "sheetId": "Appointments",
+                "rowNumber": "{{6.rowNumber}}",
+                "__IMTCONN__": 7231941,
+                "spreadsheetId": "REPLACE_WITH_SPREADSHEET_ID",
+                "tableFirstRow": "A1:Z1",
+                "includesHeaders": true,
+                "valueInputOption": "USER_ENTERED"
+              },
+              "metadata": {
+                "designer": { "x": 600, "y": -400 },
+                "restore": {
+                  "parameters": {
+                    "mode": { "label": "Enter manually" },
+                    "__IMTCONN__": {
+                      "data": { "scoped": "true", "connection": "google" },
+                      "label": "My Google connection (aihamalhawar@gmail.com)"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "flow": [
+            {
+              "id": 9,
+              "module": "google-sheets:filterRows",
+              "version": 2,
+              "mapper": {},
+              "parameters": {
+                "mode": "map",
+                "limit": 50,
+                "sheetId": "Appointments",
+                "__IMTCONN__": 7231941,
+                "spreadsheetId": "REPLACE_WITH_SPREADSHEET_ID",
+                "tableFirstRow": "A1:Z1",
+                "includesHeaders": true
+              },
+              "metadata": {
+                "designer": { "x": 0, "y": 0 },
+                "restore": {
+                  "parameters": {
+                    "mode": { "label": "Enter manually" },
+                    "__IMTCONN__": {
+                      "data": { "scoped": "true", "connection": "google" },
+                      "label": "My Google connection (aihamalhawar@gmail.com)"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "id": 10,
+              "filter": {
+                "name": "No-show: Scheduled + date_time < now-60min + noshow not sent",
+                "conditions": [
+                  [
+                    { "a": "{{9.G}}", "b": "Scheduled", "o": "text:equal" },
+                    { "a": "{{9.K}}", "b": "FALSE", "o": "text:equal" }
+                  ]
+                ]
+              },
+              "module": "google-sheets:updateRow",
+              "version": 2,
+              "mapper": { "G": "No-show", "K": "TRUE" },
+              "parameters": {
+                "mode": "map",
+                "sheetId": "Appointments",
+                "rowNumber": "{{9.rowNumber}}",
+                "__IMTCONN__": 7231941,
+                "spreadsheetId": "REPLACE_WITH_SPREADSHEET_ID",
+                "tableFirstRow": "A1:Z1",
+                "includesHeaders": true,
+                "valueInputOption": "USER_ENTERED"
+              },
+              "metadata": {
+                "designer": { "x": 300, "y": 0 },
+                "restore": {
+                  "parameters": {
+                    "mode": { "label": "Enter manually" },
+                    "__IMTCONN__": {
+                      "data": { "scoped": "true", "connection": "google" },
+                      "label": "My Google connection (aihamalhawar@gmail.com)"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "id": 11,
+              "module": "whatsapp-business-cloud:sendTemplateMessage",
+              "version": 1,
+              "mapper": {
+                "fromId": "REPLACE_WITH_PHONE_NUMBER_ID",
+                "to": "{{9.B}}",
+                "templateName": "clinic_noshow_recovery",
+                "languageCode": "{{9.H}}",
+                "components": [
+                  {
+                    "type": "body",
+                    "parameters": [
+                      { "type": "text", "text": "{{9.C}}" },
+                      { "type": "text", "text": "{{9.D}}" }
+                    ]
+                  }
+                ]
+              },
+              "parameters": { "__IMTCONN__": 14088540 },
+              "metadata": {
+                "designer": { "x": 600, "y": 0 },
+                "restore": {
+                  "parameters": {
+                    "__IMTCONN__": {
+                      "data": { "scoped": "true", "connection": "whatsapp-business-cloud" },
+                      "label": "My WhatsApp Business Cloud connection"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "id": 12,
+              "module": "google-sheets:filterRows",
+              "version": 2,
+              "mapper": {},
+              "parameters": {
+                "mode": "map",
+                "limit": 1,
+                "sheetId": "Sessions",
+                "__IMTCONN__": 7231941,
+                "spreadsheetId": "REPLACE_WITH_SPREADSHEET_ID",
+                "tableFirstRow": "A1:Z1",
+                "includesHeaders": true
+              },
+              "metadata": {
+                "designer": { "x": 900, "y": 0 },
+                "restore": {
+                  "parameters": {
+                    "mode": { "label": "Enter manually" },
+                    "__IMTCONN__": {
+                      "data": { "scoped": "true", "connection": "google" },
+                      "label": "My Google connection (aihamalhawar@gmail.com)"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "id": 13,
+              "filter": {
+                "name": "Session phone matches appointment patient_phone",
+                "conditions": [
+                  [
+                    { "a": "{{12.A}}", "b": "{{9.B}}", "o": "text:equal" }
+                  ]
+                ]
+              },
+              "module": "google-sheets:updateRow",
+              "version": 2,
+              "mapper": { "C": "AWAIT_NOSHOW", "K": "{{now}}" },
+              "parameters": {
+                "mode": "map",
+                "sheetId": "Sessions",
+                "rowNumber": "{{12.rowNumber}}",
+                "__IMTCONN__": 7231941,
+                "spreadsheetId": "REPLACE_WITH_SPREADSHEET_ID",
+                "tableFirstRow": "A1:Z1",
+                "includesHeaders": true,
+                "valueInputOption": "USER_ENTERED"
+              },
+              "metadata": {
+                "designer": { "x": 1200, "y": 0 },
+                "restore": {
+                  "parameters": {
+                    "mode": { "label": "Enter manually" },
+                    "__IMTCONN__": {
+                      "data": { "scoped": "true", "connection": "google" },
+                      "label": "My Google connection (aihamalhawar@gmail.com)"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "flow": [
+            {
+              "id": 14,
+              "module": "google-sheets:filterRows",
+              "version": 2,
+              "mapper": {},
+              "parameters": {
+                "mode": "map",
+                "limit": 50,
+                "sheetId": "Appointments",
+                "__IMTCONN__": 7231941,
+                "spreadsheetId": "REPLACE_WITH_SPREADSHEET_ID",
+                "tableFirstRow": "A1:Z1",
+                "includesHeaders": true
+              },
+              "metadata": {
+                "designer": { "x": 0, "y": 400 },
+                "restore": {
+                  "parameters": {
+                    "mode": { "label": "Enter manually" },
+                    "__IMTCONN__": {
+                      "data": { "scoped": "true", "connection": "google" },
+                      "label": "My Google connection (aihamalhawar@gmail.com)"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "id": 15,
+              "filter": {
+                "name": "Feedback: Completed + feedback not sent + date_time < now-4h",
+                "conditions": [
+                  [
+                    { "a": "{{14.G}}", "b": "Completed", "o": "text:equal" },
+                    { "a": "{{14.L}}", "b": "FALSE", "o": "text:equal" }
+                  ]
+                ]
+              },
+              "module": "whatsapp-business-cloud:sendTemplateMessage",
+              "version": 1,
+              "mapper": {
+                "fromId": "REPLACE_WITH_PHONE_NUMBER_ID",
+                "to": "{{14.B}}",
+                "templateName": "clinic_feedback_request",
+                "languageCode": "{{14.H}}",
+                "components": [
+                  {
+                    "type": "body",
+                    "parameters": [
+                      { "type": "text", "text": "{{14.C}}" },
+                      { "type": "text", "text": "{{14.D}}" }
+                    ]
+                  }
+                ]
+              },
+              "parameters": { "__IMTCONN__": 14088540 },
+              "metadata": {
+                "designer": { "x": 300, "y": 400 },
+                "restore": {
+                  "parameters": {
+                    "__IMTCONN__": {
+                      "data": { "scoped": "true", "connection": "whatsapp-business-cloud" },
+                      "label": "My WhatsApp Business Cloud connection"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "id": 16,
+              "module": "google-sheets:updateRow",
+              "version": 2,
+              "mapper": { "L": "TRUE" },
+              "parameters": {
+                "mode": "map",
+                "sheetId": "Appointments",
+                "rowNumber": "{{14.rowNumber}}",
+                "__IMTCONN__": 7231941,
+                "spreadsheetId": "REPLACE_WITH_SPREADSHEET_ID",
+                "tableFirstRow": "A1:Z1",
+                "includesHeaders": true,
+                "valueInputOption": "USER_ENTERED"
+              },
+              "metadata": {
+                "designer": { "x": 600, "y": 400 },
+                "restore": {
+                  "parameters": {
+                    "mode": { "label": "Enter manually" },
+                    "__IMTCONN__": {
+                      "data": { "scoped": "true", "connection": "google" },
+                      "label": "My Google connection (aihamalhawar@gmail.com)"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "id": 17,
+              "module": "google-sheets:filterRows",
+              "version": 2,
+              "mapper": {},
+              "parameters": {
+                "mode": "map",
+                "limit": 1,
+                "sheetId": "Sessions",
+                "__IMTCONN__": 7231941,
+                "spreadsheetId": "REPLACE_WITH_SPREADSHEET_ID",
+                "tableFirstRow": "A1:Z1",
+                "includesHeaders": true
+              },
+              "metadata": {
+                "designer": { "x": 900, "y": 400 },
+                "restore": {
+                  "parameters": {
+                    "mode": { "label": "Enter manually" },
+                    "__IMTCONN__": {
+                      "data": { "scoped": "true", "connection": "google" },
+                      "label": "My Google connection (aihamalhawar@gmail.com)"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "id": 18,
+              "filter": {
+                "name": "Session phone matches appointment patient_phone",
+                "conditions": [
+                  [
+                    { "a": "{{17.A}}", "b": "{{14.B}}", "o": "text:equal" }
+                  ]
+                ]
+              },
+              "module": "google-sheets:updateRow",
+              "version": 2,
+              "mapper": { "C": "AWAIT_FEEDBACK", "K": "{{now}}" },
+              "parameters": {
+                "mode": "map",
+                "sheetId": "Sessions",
+                "rowNumber": "{{17.rowNumber}}",
+                "__IMTCONN__": 7231941,
+                "spreadsheetId": "REPLACE_WITH_SPREADSHEET_ID",
+                "tableFirstRow": "A1:Z1",
+                "includesHeaders": true,
+                "valueInputOption": "USER_ENTERED"
+              },
+              "metadata": {
+                "designer": { "x": 1200, "y": 400 },
+                "restore": {
+                  "parameters": {
+                    "mode": { "label": "Enter manually" },
+                    "__IMTCONN__": {
+                      "data": { "scoped": "true", "connection": "google" },
+                      "label": "My Google connection (aihamalhawar@gmail.com)"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "flow": [
+            {
+              "id": 19,
+              "module": "google-sheets:filterRows",
+              "version": 2,
+              "mapper": {},
+              "parameters": {
+                "mode": "map",
+                "limit": 50,
+                "sheetId": "Sessions",
+                "__IMTCONN__": 7231941,
+                "spreadsheetId": "REPLACE_WITH_SPREADSHEET_ID",
+                "tableFirstRow": "A1:Z1",
+                "includesHeaders": true
+              },
+              "metadata": {
+                "designer": { "x": 0, "y": 800 },
+                "restore": {
+                  "parameters": {
+                    "mode": { "label": "Enter manually" },
+                    "__IMTCONN__": {
+                      "data": { "scoped": "true", "connection": "google" },
+                      "label": "My Google connection (aihamalhawar@gmail.com)"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "id": 20,
+              "filter": {
+                "name": "Reactivation: last_visit ~30 days ago — add date range filter in Make.com UI",
+                "conditions": [
+                  [
+                    { "a": "{{19.J}}", "b": "", "o": "text:notexist" }
+                  ]
+                ]
+              },
+              "module": "whatsapp-business-cloud:sendTemplateMessage",
+              "version": 1,
+              "mapper": {
+                "fromId": "REPLACE_WITH_PHONE_NUMBER_ID",
+                "to": "{{19.A}}",
+                "templateName": "clinic_reactivation",
+                "languageCode": "{{19.B}}",
+                "components": [
+                  {
+                    "type": "body",
+                    "parameters": [
+                      { "type": "text", "text": "{{1.value}}" }
+                    ]
+                  }
+                ]
+              },
+              "parameters": { "__IMTCONN__": 14088540 },
+              "metadata": {
+                "designer": { "x": 300, "y": 800 },
+                "restore": {
+                  "parameters": {
+                    "__IMTCONN__": {
+                      "data": { "scoped": "true", "connection": "whatsapp-business-cloud" },
+                      "label": "My WhatsApp Business Cloud connection"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "instant": false,
+    "version": 1,
+    "designer": { "orphans": [] },
+    "scenario": {
+      "dlq": false,
+      "slots": null,
+      "dataloss": false,
+      "maxErrors": 3,
+      "autoCommit": true,
+      "roundtrips": 1,
+      "sequential": false,
+      "confidential": false,
+      "freshVariables": false,
+      "autoCommitTriggerLast": true
+    }
+  },
+  "scheduling": { "type": "indefinitely", "interval": 3600 }
+}

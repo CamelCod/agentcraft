@@ -1,0 +1,120 @@
+---
+import type { Appointment } from '../../lib/sheets';
+import { LANG_FLAGS } from '../../lib/sheets';
+
+interface Props {
+  appointments: Appointment[];
+}
+const { appointments } = Astro.props;
+
+const statusColor: Record<string, string> = {
+  Scheduled: 'badge--blue',
+  Completed: 'badge--green',
+  'No-show': 'badge--red',
+  Cancelled: 'badge--gray',
+};
+---
+
+<div class="table-controls">
+  <input id="apt-search" type="search" placeholder="Search patient or doctor..." class="search-input" />
+  <div class="filter-chips">
+    <button class="chip chip--active" data-filter="all">All</button>
+    <button class="chip" data-filter="Scheduled">Scheduled</button>
+    <button class="chip" data-filter="Completed">Completed</button>
+    <button class="chip" data-filter="No-show">No-show</button>
+  </div>
+</div>
+
+<div class="table-wrap">
+  <table class="apt-table" id="apt-table">
+    <thead>
+      <tr>
+        <th>Date / Time</th>
+        <th>Patient</th>
+        <th>Doctor</th>
+        <th>Specialty</th>
+        <th>Lang</th>
+        <th>Status</th>
+        <th>Rating</th>
+      </tr>
+    </thead>
+    <tbody>
+      {appointments.map(apt => (
+        <tr data-status={apt.status} data-search={`${apt.patient_name} ${apt.doctor_name} ${apt.specialty}`.toLowerCase()}>
+          <td class="apt-date">{apt.date_time || '—'}</td>
+          <td>
+            <div class="patient-name">{apt.patient_name || '—'}</div>
+            <div class="patient-phone">{apt.patient_phone}</div>
+          </td>
+          <td>{apt.doctor_name || '—'}</td>
+          <td>{apt.specialty || '—'}</td>
+          <td class="lang-cell">{LANG_FLAGS[apt.lang] ?? apt.lang}</td>
+          <td><span class={`badge ${statusColor[apt.status] ?? 'badge--gray'}`}>{apt.status}</span></td>
+          <td class="rating-cell">{apt.feedback_rating ? '★'.repeat(apt.feedback_rating) + '☆'.repeat(5 - apt.feedback_rating) : '—'}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+  {appointments.length === 0 && (
+    <p class="empty-state">No appointments found. Add your Google Sheets config to load data.</p>
+  )}
+</div>
+
+<script>
+  const searchInput = document.getElementById('apt-search') as HTMLInputElement;
+  const chips = document.querySelectorAll('.chip');
+  let activeFilter = 'all';
+
+  function applyFilters() {
+    const q = searchInput.value.toLowerCase();
+    document.querySelectorAll('#apt-table tbody tr').forEach(row => {
+      const el = row as HTMLElement;
+      const matchFilter = activeFilter === 'all' || el.dataset.status === activeFilter;
+      const matchSearch = !q || (el.dataset.search ?? '').includes(q);
+      el.style.display = matchFilter && matchSearch ? '' : 'none';
+    });
+  }
+
+  searchInput?.addEventListener('input', applyFilters);
+
+  chips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      chips.forEach(c => c.classList.remove('chip--active'));
+      chip.classList.add('chip--active');
+      activeFilter = (chip as HTMLElement).dataset.filter ?? 'all';
+      applyFilters();
+    });
+  });
+</script>
+
+<style>
+  .table-controls { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+  .search-input {
+    padding: 8px 14px; border: 1px solid #e2e8f0; border-radius: 8px;
+    font-size: 0.875rem; width: 260px; outline: none;
+  }
+  .search-input:focus { border-color: #6366f1; }
+  .filter-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip {
+    padding: 5px 12px; border-radius: 20px; border: 1px solid #e2e8f0;
+    background: #f8fafc; font-size: 0.8rem; cursor: pointer; color: #64748b;
+  }
+  .chip--active { background: #6366f1; color: #fff; border-color: #6366f1; }
+  .table-wrap { overflow-x: auto; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .apt-table { width: 100%; border-collapse: collapse; background: #fff; font-size: 0.875rem; }
+  .apt-table th { background: #f8fafc; padding: 12px 16px; text-align: left; font-weight: 600; color: #475569; font-size: 0.8rem; border-bottom: 1px solid #e2e8f0; }
+  .apt-table td { padding: 12px 16px; border-bottom: 1px solid #f1f5f9; color: #1e293b; vertical-align: middle; }
+  .apt-table tr:last-child td { border-bottom: none; }
+  .apt-table tr:hover td { background: #f8fafc; }
+  .apt-date { font-family: monospace; font-size: 0.8rem; color: #475569; white-space: nowrap; }
+  .patient-name { font-weight: 500; }
+  .patient-phone { font-size: 0.75rem; color: #94a3b8; }
+  .lang-cell { font-size: 1.1rem; }
+  .rating-cell { font-size: 0.75rem; color: #f59e0b; white-space: nowrap; }
+  .badge { padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 500; }
+  .badge--blue   { background: #eff6ff; color: #2563eb; }
+  .badge--green  { background: #f0fdf4; color: #16a34a; }
+  .badge--red    { background: #fef2f2; color: #dc2626; }
+  .badge--gray   { background: #f8fafc; color: #64748b; }
+  .empty-state { padding: 40px; text-align: center; color: #94a3b8; background: #fff; border-radius: 10px; }
+</style>

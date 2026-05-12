@@ -1,0 +1,104 @@
+---
+import type { Patient } from '../../lib/sheets';
+import { LANG_FLAGS, LANG_NAMES } from '../../lib/sheets';
+
+interface Props {
+  patient: Patient;
+  appointmentCount?: number;
+}
+const { patient, appointmentCount = 0 } = Astro.props;
+
+const stateLabel: Record<string, string> = {
+  AWAIT_LANG: 'Selecting language',
+  AWAIT_LANG2: 'Selecting language',
+  AWAIT_SPECIALTY: 'Selecting specialty',
+  AWAIT_DOCTOR: 'Selecting doctor',
+  AWAIT_DATE: 'Selecting date',
+  AWAIT_TIME: 'Selecting time',
+  AWAIT_NAME: 'Entering name',
+  AWAIT_CONFIRM: 'Confirming',
+  AWAIT_FEEDBACK: 'Leaving feedback',
+  AWAIT_NOSHOW: 'No-show recovery',
+};
+const base = import.meta.env.BASE_URL;
+const flag = LANG_FLAGS[patient.lang] ?? '🌐';
+const langName = LANG_NAMES[patient.lang] ?? patient.lang;
+const state = stateLabel[patient.state] ?? (patient.state || 'Idle');
+---
+
+<div class="patient-card">
+  <div class="patient-card__header">
+    <div class="patient-avatar">{flag}</div>
+    <div class="patient-info">
+      <div class="patient-name">{patient.patient_name || patient.phone}</div>
+      <div class="patient-phone">{patient.phone}</div>
+    </div>
+    <a href={`${base}clinic/conversations?phone=${encodeURIComponent(patient.phone)}`} class="view-chat-btn">
+      Chat →
+    </a>
+  </div>
+  <div class="patient-card__body">
+    <div class="patient-meta">
+      <span class="meta-item">
+        <span class="meta-icon">🗣</span>
+        {langName}
+      </span>
+      <span class="meta-item">
+        <span class="meta-icon">📅</span>
+        {patient.last_visit || 'No visits yet'}
+      </span>
+      <span class="meta-item">
+        <span class="meta-icon">📋</span>
+        {appointmentCount} booking{appointmentCount !== 1 ? 's' : ''}
+      </span>
+    </div>
+    <div class={`state-badge ${patient.state ? 'state-badge--active' : 'state-badge--idle'}`}>
+      {state}
+    </div>
+  </div>
+</div>
+
+<style>
+  .patient-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    overflow: hidden;
+    transition: box-shadow 0.15s;
+  }
+  .patient-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+  .patient-card__header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .patient-avatar { font-size: 1.8rem; }
+  .patient-info { flex: 1; min-width: 0; }
+  .patient-name { font-weight: 600; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .patient-phone { font-size: 0.75rem; color: #94a3b8; }
+  .view-chat-btn {
+    font-size: 0.8rem;
+    color: #6366f1;
+    text-decoration: none;
+    white-space: nowrap;
+    padding: 4px 10px;
+    border: 1px solid #c7d2fe;
+    border-radius: 6px;
+  }
+  .view-chat-btn:hover { background: #eef2ff; }
+  .patient-card__body { padding: 12px 16px; }
+  .patient-meta { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 10px; }
+  .meta-item { display: flex; align-items: center; gap: 4px; font-size: 0.8rem; color: #64748b; }
+  .meta-icon { font-size: 0.85rem; }
+  .state-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+  .state-badge--active { background: #fef9c3; color: #854d0e; }
+  .state-badge--idle   { background: #f1f5f9; color: #64748b; }
+</style>
