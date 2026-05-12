@@ -22,6 +22,7 @@ const navItems = [
     ))}
   </nav>
   <div class="sidebar-footer">
+    <button id="clinic-settings" class="settings-btn">⚙️ Settings</button>
     <button id="clinic-logout" class="logout-btn">Sign out</button>
   </div>
 </aside>
@@ -33,6 +34,10 @@ const navItems = [
     if (currentPath.startsWith(href) && href !== '/') {
       link.classList.add('active');
     }
+  });
+
+  document.getElementById('clinic-settings')?.addEventListener('click', () => {
+    document.dispatchEvent(new CustomEvent('clinic:show-setup'));
   });
 
   document.getElementById('clinic-logout')?.addEventListener('click', () => {
@@ -84,6 +89,18 @@ const navItems = [
   }
   .nav-icon { font-size: 1rem; }
   .sidebar-footer { padding: 16px 20px; border-top: 1px solid #334155; }
+  .settings-btn {
+    background: none;
+    border: 1px solid #475569;
+    color: #94a3b8;
+    padding: 7px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    width: 100%;
+    margin-bottom: 8px;
+  }
+  .settings-btn:hover { background: #334155; color: #f1f5f9; }
   .logout-btn {
     background: none;
     border: 1px solid #475569;

@@ -1,3 +1,7 @@
+// Client-side Google Sheets API utilities — credentials read from localStorage
+
+const SHEETS_BASE = 'https://sheets.googleapis.com/v4/spreadsheets';
+
 export interface Appointment {
   id: string;
   patient_phone: string;
@@ -30,39 +34,46 @@ export interface Patient {
   updated_at: string;
 }
 
-export interface Doctor {
-  id: string;
-  name_en: string;
-  name_ar: string;
-  specialty: string;
-  active: boolean;
-}
-
 export interface ConversationMessage {
   role: 'patient' | 'bot';
   text: string;
   timestamp?: string;
 }
 
-const SHEETS_API_BASE = 'https://sheets.googleapis.com/v4/spreadsheets';
+export const LANG_FLAGS: Record<string, string> = {
+  ar: '🇦🇪', en: '🇬🇧', hi: '🇮🇳', ur: '🇵🇰', tl: '🇵🇭', ml: '🇮🇳', fr: '🇫🇷',
+};
 
-function getSheetsConfig() {
-  const apiKey = import.meta.env.PUBLIC_SHEETS_API_KEY;
-  const spreadsheetId = import.meta.env.PUBLIC_CLINIC_SPREADSHEET_ID;
-  return { apiKey, spreadsheetId };
+export const LANG_NAMES: Record<string, string> = {
+  ar: 'Arabic', en: 'English', hi: 'Hindi', ur: 'Urdu', tl: 'Filipino', ml: 'Malayalam', fr: 'French',
+};
+
+export function esc(s: unknown): string {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
-async function fetchRange(range: string): Promise<string[][]> {
-  const { apiKey, spreadsheetId } = getSheetsConfig();
-  if (!apiKey || !spreadsheetId) {
-    console.warn('Sheets API key or spreadsheet ID not configured');
-    return [];
-  }
-  const url = `${SHEETS_API_BASE}/${spreadsheetId}/values/${encodeURIComponent(range)}?key=${apiKey}`;
+export function starsHtml(rating: number | null): string {
+  if (rating === null) return '—';
+  const r = Math.max(1, Math.min(5, Math.round(rating)));
+  return '★'.repeat(r) + '☆'.repeat(5 - r);
+}
+
+// Handles both ISO-8601 and the 'YYYY-MM-DD HH:mm' format documented in the README
+export function parseDatetime(dt: string): Date {
+  if (!dt) return new Date(NaN);
+  return new Date(dt.replace(' ', 'T'));
+}
+
+async function fetchRange(apiKey: string, spreadsheetId: string, range: string): Promise<string[][]> {
+  const url = `${SHEETS_BASE}/${encodeURIComponent(spreadsheetId)}/values/${encodeURIComponent(range)}?key=${encodeURIComponent(apiKey)}`;
   const res = await fetch(url);
   if (!res.ok) {
-    console.error(`Sheets fetch error: ${res.status} ${res.statusText}`);
-    return [];
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body?.error?.message ?? `Sheets API error ${res.status}`);
   }
   const data = await res.json();
   return data.values ?? [];
@@ -74,14 +85,15 @@ function rowToObject(headers: string[], row: string[]): Record<string, string> {
   return obj;
 }
 
-export async function fetchAppointments(): Promise<Appointment[]> {
-  const rows = await fetchRange('Appointments!A:O');
+export async function fetchAppointments(apiKey: string, spreadsheetId: string): Promise<Appointment[]> {
+  const rows = await fetchRange(apiKey, spreadsheetId, 'Appointments!A:O');
   if (rows.length < 2) return [];
   const [headers, ...data] = rows;
   return data
     .filter(row => row.length > 0 && row[0])
     .map(row => {
       const r = rowToObject(headers, row);
+      const rating = parseInt(r.feedback_rating, 10);
       return {
         id: r.id,
         patient_phone: r.patient_phone,
@@ -95,38 +107,20 @@ export async function fetchAppointments(): Promise<Appointment[]> {
         reminder_2h_sent: r.reminder_2h_sent === 'TRUE',
         noshow_recovery_sent: r.noshow_recovery_sent === 'TRUE',
         feedback_sent: r.feedback_sent === 'TRUE',
-        feedback_rating: (() => { const v = parseInt(r.feedback_rating, 10); return (!isNaN(v) && v >= 1 && v <= 5) ? v : null; })(),
+        feedback_rating: (!isNaN(rating) && rating >= 1 && rating <= 5) ? rating : null,
         google_review_sent: r.google_review_sent === 'TRUE',
         created_at: r.created_at,
       };
     });
 }
 
-export async function fetchPatients(): Promise<Patient[]> {
-  const rows = await fetchRange('Sessions!A:K');
+export async function fetchPatients(apiKey: string, spreadsheetId: string): Promise<Patient[]> {
+  const rows = await fetchRange(apiKey, spreadsheetId, 'Sessions!A:K');
   if (rows.length < 2) return [];
   const [headers, ...data] = rows;
   return data
     .filter(row => row.length > 0 && row[0])
     .map(row => rowToObject(headers, row) as unknown as Patient);
-}
-
-export async function fetchDoctors(): Promise<Doctor[]> {
-  const rows = await fetchRange('Doctors!A:E');
-  if (rows.length < 2) return [];
-  const [headers, ...data] = rows;
-  return data
-    .filter(row => row.length > 0 && row[0])
-    .map(row => {
-      const r = rowToObject(headers, row);
-      return {
-        id: r.id,
-        name_en: r.name_en,
-        name_ar: r.name_ar,
-        specialty: r.specialty,
-        active: r.active === 'TRUE',
-      };
-    });
 }
 
 export function parseConversation(json: string): ConversationMessage[] {
@@ -137,23 +131,3 @@ export function parseConversation(json: string): ConversationMessage[] {
     return [];
   }
 }
-
-export const LANG_FLAGS: Record<string, string> = {
-  ar: '🇦🇪',
-  en: '🇬🇧',
-  hi: '🇮🇳',
-  ur: '🇵🇰',
-  tl: '🇵🇭',
-  ml: '🇮🇳',
-  fr: '🇫🇷',
-};
-
-export const LANG_NAMES: Record<string, string> = {
-  ar: 'Arabic',
-  en: 'English',
-  hi: 'Hindi',
-  ur: 'Urdu',
-  tl: 'Filipino',
-  ml: 'Malayalam',
-  fr: 'French',
-};

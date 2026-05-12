@@ -1,42 +1,8 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import ClinicNav from '../../components/clinic/ClinicNav.astro';
-import StatsCard from '../../components/clinic/StatsCard.astro';
-import { fetchAppointments, fetchPatients, LANG_FLAGS, LANG_NAMES } from '../../lib/sheets';
-
-const [appointments, patients] = await Promise.all([fetchAppointments(), fetchPatients()]);
-
-const total = appointments.length;
-const completed = appointments.filter(a => a.status === 'Completed').length;
-const noShows = appointments.filter(a => a.status === 'No-show').length;
-const noShowRate = total > 0 ? ((noShows / total) * 100).toFixed(1) : '0';
-
-const ratings = appointments.filter(a => a.feedback_rating !== null).map(a => a.feedback_rating as number);
-const avgRating = ratings.length > 0 ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(2) : null;
-
-const langCounts: Record<string, number> = {};
-for (const a of appointments) {
-  langCounts[a.lang] = (langCounts[a.lang] ?? 0) + 1;
-}
-
-const weeklyData: Record<string, number> = {};
-for (const a of appointments) {
-  if (!a.date_time) continue;
-  const d = new Date(a.date_time);
-  if (isNaN(d.getTime())) continue;
-  const weekStart = new Date(d);
-  weekStart.setDate(d.getDate() - d.getDay());
-  const key = weekStart.toISOString().slice(0, 10);
-  weeklyData[key] = (weeklyData[key] ?? 0) + 1;
-}
-const weeklyLabels = Object.keys(weeklyData).sort().slice(-8);
-const weeklyValues = weeklyLabels.map(k => weeklyData[k]);
-
-const langLabels = Object.keys(langCounts);
-const langValues = Object.values(langCounts);
-const langDisplayLabels = langLabels.map(l => `${LANG_FLAGS[l] ?? ''} ${LANG_NAMES[l] ?? l}`);
-
-const ratingDist = [1, 2, 3, 4, 5].map(r => ratings.filter(v => v === r).length);
+import ClinicSetup from '../../components/clinic/ClinicSetup.astro';
+// Data is fetched client-side via ClinicSetup + sheets-client.ts
 ---
 
 <BaseLayout title="Analytics — Clinic CRM">
@@ -44,112 +10,187 @@ const ratingDist = [1, 2, 3, 4, 5].map(r => ratings.filter(v => v === r).length)
     <ClinicNav />
     <main class="clinic-main">
       <header class="page-header">
-        <h1>Analytics</h1>
-        <p class="page-subtitle">Booking trends, no-show rates, and patient feedback</p>
+        <div>
+          <h1>Analytics</h1>
+          <p class="page-subtitle">Booking trends, no-show rates, and patient feedback</p>
+        </div>
+        <button id="btn-refresh" class="refresh-btn" style="display:none">↻ Refresh</button>
       </header>
 
-      <div class="stats-grid">
-        <StatsCard label="Total Bookings" value={total} icon="📋" color="blue" />
-        <StatsCard label="Completed" value={completed} icon="✅" color="green" />
-        <StatsCard label="No-show Rate" value={`${noShowRate}%`} icon="⚠️" color={parseFloat(noShowRate) > 20 ? 'red' : 'yellow'} />
-        <StatsCard label="Avg Feedback" value={avgRating ? `${avgRating} ★` : '—'} icon="⭐" color="green" />
-        <StatsCard label="Patients" value={patients.length} icon="👥" color="purple" />
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-skeleton"></div>
+        <div class="stat-skeleton"></div>
+        <div class="stat-skeleton"></div>
+        <div class="stat-skeleton"></div>
+        <div class="stat-skeleton"></div>
       </div>
 
       <div class="charts-grid">
-        <div class="chart-card">
-          <h3 class="chart-title">Bookings per Week</h3>
-          <canvas id="weeklyChart" height="220"></canvas>
-        </div>
-        <div class="chart-card">
-          <h3 class="chart-title">Language Distribution</h3>
-          <canvas id="langChart" height="220"></canvas>
-        </div>
-        <div class="chart-card">
-          <h3 class="chart-title">Feedback Distribution (1–5 stars)</h3>
-          <canvas id="ratingChart" height="220"></canvas>
-        </div>
-        <div class="chart-card">
-          <h3 class="chart-title">Appointment Status</h3>
-          <canvas id="statusChart" height="220"></canvas>
-        </div>
+        <div class="chart-card"><h3 class="chart-title">Bookings per Week</h3><canvas id="weeklyChart" height="220"></canvas></div>
+        <div class="chart-card"><h3 class="chart-title">Language Distribution</h3><canvas id="langChart" height="220"></canvas></div>
+        <div class="chart-card"><h3 class="chart-title">Feedback (1–5 ★)</h3><canvas id="ratingChart" height="220"></canvas></div>
+        <div class="chart-card"><h3 class="chart-title">Appointment Status</h3><canvas id="statusChart" height="220"></canvas></div>
       </div>
     </main>
   </div>
+  <ClinicSetup />
 </BaseLayout>
 
+<!-- Chart.js loaded inline so it is available before the module script runs -->
 <script is:inline src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 
-<script is:inline define:vars={{
-  weeklyLabels,
-  weeklyValues,
-  langDisplayLabels,
-  langValues,
-  ratingDist,
-  scheduled: appointments.filter(a => a.status === 'Scheduled').length,
-  completed,
-  noShows,
-  cancelled: appointments.filter(a => a.status === 'Cancelled').length
-}}>
-  (function() {
-    const PIN = '1234';
-    if (localStorage.getItem('clinic_pin_ok') !== 'true') {
-      const entered = prompt('Enter clinic PIN:');
-      if (entered !== PIN) {
-        document.body.innerHTML = '<p style="padding:40px;color:#ef4444;">Access denied.</p>';
-        return;
-      }
-      localStorage.setItem('clinic_pin_ok', 'true');
+<script>
+  import {
+    fetchAppointments, fetchPatients,
+    LANG_FLAGS, LANG_NAMES,
+    esc, parseDatetime,
+  } from '../../lib/sheets-client';
+  import type { Appointment, Patient } from '../../lib/sheets-client';
+
+  declare const Chart: any;
+
+  const statsEl   = document.getElementById('stats-grid')!;
+  const refreshBtn = document.getElementById('btn-refresh') as HTMLButtonElement;
+
+  let charts: any[] = [];
+
+  function destroyCharts() {
+    charts.forEach(c => c.destroy());
+    charts = [];
+  }
+
+  function renderStats(apts: Appointment[], patients: Patient[]) {
+    const total     = apts.length;
+    const completed = apts.filter(a => a.status === 'Completed').length;
+    const noShows   = apts.filter(a => a.status === 'No-show').length;
+    const noShowRate = total > 0 ? ((noShows / total) * 100).toFixed(1) : '0';
+    const ratings   = apts.filter(a => a.feedback_rating !== null).map(a => a.feedback_rating as number);
+    const avgRating = ratings.length > 0
+      ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(2) : null;
+
+    statsEl.innerHTML = [
+      { label: 'Total Bookings', value: total,                                     icon: '📋', color: 'blue'   },
+      { label: 'Completed',      value: completed,                                  icon: '✅', color: 'green'  },
+      { label: 'No-show Rate',   value: `${noShowRate}%`,                           icon: '⚠️', color: parseFloat(noShowRate) > 20 ? 'red' : 'yellow' },
+      { label: 'Avg Feedback',   value: avgRating ? `${avgRating} ★` : '—',        icon: '⭐', color: 'green'  },
+      { label: 'Patients',       value: patients.length,                            icon: '👥', color: 'purple' },
+    ].map(c => `
+      <div class="stat-card stat--${c.color}">
+        <div class="stat-icon">${c.icon}</div>
+        <div class="stat-value">${esc(String(c.value))}</div>
+        <div class="stat-label">${esc(c.label)}</div>
+      </div>
+    `).join('');
+  }
+
+  function renderCharts(apts: Appointment[]) {
+    destroyCharts();
+
+    // Weekly bookings
+    const weeklyData: Record<string, number> = {};
+    for (const a of apts) {
+      const d = parseDatetime(a.date_time);
+      if (isNaN(d.getTime())) continue;
+      const weekStart = new Date(d);
+      weekStart.setDate(d.getDate() - d.getDay());
+      const key = weekStart.toISOString().slice(0, 10);
+      weeklyData[key] = (weeklyData[key] ?? 0) + 1;
     }
-  })();
+    const weeklyLabels = Object.keys(weeklyData).sort().slice(-8);
+    const weeklyValues = weeklyLabels.map(k => weeklyData[k]);
 
-  const defaultOpts = { responsive: true, plugins: { legend: { display: false } } };
+    // Language distribution
+    const langCounts: Record<string, number> = {};
+    for (const a of apts) langCounts[a.lang] = (langCounts[a.lang] ?? 0) + 1;
+    const langLabels  = Object.keys(langCounts);
+    const langValues  = Object.values(langCounts);
+    const langDisplay = langLabels.map(l => `${LANG_FLAGS[l] ?? ''} ${LANG_NAMES[l] ?? l}`);
 
-  new Chart(document.getElementById('weeklyChart'), {
-    type: 'bar',
-    data: {
-      labels: weeklyLabels,
-      datasets: [{ label: 'Bookings', data: weeklyValues, backgroundColor: '#6366f1', borderRadius: 6 }]
-    },
-    options: { ...defaultOpts, scales: { x: { grid: { display: false } } } }
-  });
+    // Rating distribution
+    const ratings    = apts.filter(a => a.feedback_rating !== null).map(a => a.feedback_rating as number);
+    const ratingDist = [1, 2, 3, 4, 5].map(r => ratings.filter(v => v === r).length);
 
-  new Chart(document.getElementById('langChart'), {
-    type: 'doughnut',
-    data: {
-      labels: langDisplayLabels,
-      datasets: [{ data: langValues, backgroundColor: ['#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899'] }]
-    },
-    options: { responsive: true, plugins: { legend: { position: 'right' } } }
-  });
+    // Status counts
+    const scheduled  = apts.filter(a => a.status === 'Scheduled').length;
+    const completed  = apts.filter(a => a.status === 'Completed').length;
+    const noShows    = apts.filter(a => a.status === 'No-show').length;
+    const cancelled  = apts.filter(a => a.status === 'Cancelled').length;
 
-  new Chart(document.getElementById('ratingChart'), {
-    type: 'bar',
-    data: {
-      labels: ['1 ★', '2 ★', '3 ★', '4 ★', '5 ★'],
-      datasets: [{ label: 'Count', data: ratingDist, backgroundColor: ['#ef4444','#f97316','#f59e0b','#84cc16','#10b981'], borderRadius: 6 }]
-    },
-    options: { ...defaultOpts, scales: { x: { grid: { display: false } } } }
-  });
+    const defaultOpts = { responsive: true, plugins: { legend: { display: false } } };
 
-  new Chart(document.getElementById('statusChart'), {
-    type: 'doughnut',
-    data: {
-      labels: ['Scheduled', 'Completed', 'No-show', 'Cancelled'],
-      datasets: [{ data: [scheduled, completed, noShows, cancelled], backgroundColor: ['#6366f1','#10b981','#ef4444','#94a3b8'] }]
-    },
-    options: { responsive: true, plugins: { legend: { position: 'right' } } }
+    charts.push(new Chart(document.getElementById('weeklyChart'), {
+      type: 'bar',
+      data: { labels: weeklyLabels, datasets: [{ label: 'Bookings', data: weeklyValues, backgroundColor: '#6366f1', borderRadius: 6 }] },
+      options: { ...defaultOpts, scales: { x: { grid: { display: false } } } },
+    }));
+
+    charts.push(new Chart(document.getElementById('langChart'), {
+      type: 'doughnut',
+      data: { labels: langDisplay, datasets: [{ data: langValues, backgroundColor: ['#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899'] }] },
+      options: { responsive: true, plugins: { legend: { position: 'right' } } },
+    }));
+
+    charts.push(new Chart(document.getElementById('ratingChart'), {
+      type: 'bar',
+      data: { labels: ['1 ★','2 ★','3 ★','4 ★','5 ★'], datasets: [{ label: 'Count', data: ratingDist, backgroundColor: ['#ef4444','#f97316','#f59e0b','#84cc16','#10b981'], borderRadius: 6 }] },
+      options: { ...defaultOpts, scales: { x: { grid: { display: false } } } },
+    }));
+
+    charts.push(new Chart(document.getElementById('statusChart'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Scheduled','Completed','No-show','Cancelled'],
+        datasets: [{ data: [scheduled, completed, noShows, cancelled], backgroundColor: ['#6366f1','#10b981','#ef4444','#94a3b8'] }],
+      },
+      options: { responsive: true, plugins: { legend: { position: 'right' } } },
+    }));
+  }
+
+  async function load(apiKey: string, spreadsheetId: string) {
+    statsEl.innerHTML = '<div class="stat-skeleton"></div>'.repeat(5);
+    try {
+      const [apts, patients] = await Promise.all([
+        fetchAppointments(apiKey, spreadsheetId),
+        fetchPatients(apiKey, spreadsheetId),
+      ]);
+      renderStats(apts, patients);
+      renderCharts(apts);
+      refreshBtn.style.display = '';
+      refreshBtn.onclick = () => load(apiKey, spreadsheetId);
+    } catch (err) {
+      statsEl.innerHTML = `<p class="error-state" style="grid-column:1/-1">Error: ${esc((err as Error).message)}</p>`;
+    }
+  }
+
+  (window as any).__clinicReady.then(({ apiKey, spreadsheetId }: { apiKey: string; spreadsheetId: string }) => {
+    load(apiKey, spreadsheetId);
   });
 </script>
 
 <style>
-  .clinic-shell { display: flex; min-height: 100vh; background: #f1f5f9; }
-  .clinic-main { flex: 1; padding: 32px; overflow-x: hidden; }
-  .page-header { margin-bottom: 24px; }
+  .clinic-shell  { display: flex; min-height: 100vh; background: #f1f5f9; }
+  .clinic-main   { flex: 1; padding: 32px; overflow-x: hidden; }
+  .page-header   { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
   .page-header h1 { font-size: 1.5rem; font-weight: 700; color: #1e293b; margin: 0; }
-  .page-subtitle { color: #64748b; font-size: 0.875rem; margin: 4px 0 0; }
-  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
-  .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 20px; }
-  .chart-card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .page-subtitle  { color: #64748b; font-size: 0.875rem; margin: 4px 0 0; }
+  .refresh-btn    { padding: 7px 14px; border: 1px solid #e2e8f0; border-radius: 6px; background: #fff; font-size: 0.8rem; cursor: pointer; color: #475569; }
+  .refresh-btn:hover { background: #f8fafc; }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 28px; }
+  .stat-card  { background: #fff; border-radius: 10px; padding: 16px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .stat-icon  { font-size: 1.5rem; margin-bottom: 8px; }
+  .stat-value { font-size: 1.6rem; font-weight: 700; color: #1e293b; }
+  .stat-label { font-size: 0.75rem; color: #94a3b8; margin-top: 2px; }
+  .stat--blue .stat-value   { color: #2563eb; }
+  .stat--green .stat-value  { color: #16a34a; }
+  .stat--purple .stat-value { color: #7c3aed; }
+  .stat--yellow .stat-value { color: #d97706; }
+  .stat--red .stat-value    { color: #dc2626; }
+  .stat-skeleton { background: #e2e8f0; border-radius: 10px; height: 90px; animation: pulse 1.5s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+  .error-state { padding: 24px; text-align: center; color: #dc2626; background: #fef2f2; border-radius: 10px; }
+
+  .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; }
+  .chart-card  { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
   .chart-title { font-size: 0.9rem; font-weight: 600; color: #475569; margin: 0 0 16px; }
 </style>

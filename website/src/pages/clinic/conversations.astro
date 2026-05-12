@@ -1,13 +1,8 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import ClinicNav from '../../components/clinic/ClinicNav.astro';
-import ConversationLog from '../../components/clinic/ConversationLog.astro';
-import { fetchPatients, parseConversation, LANG_FLAGS } from '../../lib/sheets';
-
-const patients = await fetchPatients();
-const selectedPhone = Astro.url.searchParams.get('phone') ?? '';
-const selectedPatient = patients.find(p => p.phone === selectedPhone) ?? patients[0];
-const messages = selectedPatient ? parseConversation(selectedPatient.conversation_json) : [];
+import ClinicSetup from '../../components/clinic/ClinicSetup.astro';
+// Data is fetched client-side via ClinicSetup + sheets-client.ts
 ---
 
 <BaseLayout title="Conversations — Clinic CRM">
@@ -22,93 +17,161 @@ const messages = selectedPatient ? parseConversation(selectedPatient.conversatio
       <div class="conversations-layout">
         <aside class="patient-list">
           <div class="patient-list-search">
-            <input id="conv-search" type="search" placeholder="Search..." class="search-input" />
+            <input id="conv-search" type="search" placeholder="Search…" class="search-input" />
           </div>
-          <div class="patient-list-items" id="patient-list-items">
-            {patients.map(p => (
-              <a
-                href={`?phone=${encodeURIComponent(p.phone)}`}
-                class={`patient-list-item ${p.phone === selectedPhone ? 'active' : ''}`}
-                data-search={`${p.patient_name} ${p.phone}`.toLowerCase()}
-              >
-                <span class="patient-flag">{LANG_FLAGS[p.lang] ?? '🌐'}</span>
-                <span class="patient-details">
-                  <span class="patient-item-name">{p.patient_name || p.phone}</span>
-                  <span class="patient-item-phone">{p.phone}</span>
-                </span>
-                <span class={`state-dot ${p.state ? 'state-dot--active' : ''}`} title={p.state}></span>
-              </a>
-            ))}
-            {patients.length === 0 && <p class="list-empty">No patients found.</p>}
+          <div id="patient-list-items" class="patient-list-items">
+            <p class="list-loading">Loading…</p>
           </div>
         </aside>
-
-        <section class="chat-panel">
-          {selectedPatient ? (
-            <>
-              <div class="chat-header">
-                <span class="chat-flag">{LANG_FLAGS[selectedPatient.lang] ?? '🌐'}</span>
-                <div>
-                  <div class="chat-name">{selectedPatient.patient_name || selectedPatient.phone}</div>
-                  <div class="chat-meta">
-                    {selectedPatient.phone} · State: <strong>{selectedPatient.state || 'idle'}</strong>
-                    · Last updated: {selectedPatient.updated_at || '—'}
-                  </div>
-                </div>
-              </div>
-              <ConversationLog messages={messages} patientName={selectedPatient.patient_name || selectedPatient.phone} />
-            </>
-          ) : (
-            <div class="chat-empty">Select a patient to view their conversation history.</div>
-          )}
+        <section id="chat-panel" class="chat-panel">
+          <div class="chat-empty">Select a patient to view their conversation.</div>
         </section>
       </div>
     </main>
   </div>
+  <ClinicSetup />
 </BaseLayout>
 
 <script>
-  (function() {
-    const PIN = '1234';
-    if (localStorage.getItem('clinic_pin_ok') !== 'true') {
-      const entered = prompt('Enter clinic PIN:');
-      if (entered !== PIN) {
-        document.body.innerHTML = '<p style="padding:40px;color:#ef4444;">Access denied.</p>';
-        return;
-      }
-      localStorage.setItem('clinic_pin_ok', 'true');
-    }
-  })();
+  import { fetchPatients, parseConversation, LANG_FLAGS, esc } from '../../lib/sheets-client';
+  import type { Patient, ConversationMessage } from '../../lib/sheets-client';
 
-  document.getElementById('conv-search')?.addEventListener('input', (e) => {
-    const q = (e.target as HTMLInputElement).value.toLowerCase();
-    document.querySelectorAll('.patient-list-item').forEach(el => {
-      const item = el as HTMLElement;
-      item.style.display = !q || (item.dataset.search ?? '').includes(q) ? '' : 'none';
+  const listEl   = document.getElementById('patient-list-items')!;
+  const chatEl   = document.getElementById('chat-panel')!;
+  const searchEl = document.getElementById('conv-search') as HTMLInputElement;
+
+  let allPatients: Patient[] = [];
+
+  function getSelectedPhone(): string {
+    return new URLSearchParams(window.location.search).get('phone') ?? '';
+  }
+
+  function renderSidebar(patients: Patient[]) {
+    const selected = getSelectedPhone();
+    if (patients.length === 0) {
+      listEl.innerHTML = '<p class="list-empty">No patients found.</p>';
+      return;
+    }
+    listEl.innerHTML = patients.map(p => `
+      <a href="?phone=${encodeURIComponent(p.phone)}"
+         class="patient-list-item ${p.phone === selected ? 'active' : ''}"
+         data-phone="${esc(p.phone)}"
+         data-search="${esc(`${p.patient_name} ${p.phone}`.toLowerCase())}">
+        <span class="patient-flag">${LANG_FLAGS[p.lang] ?? '🌐'}</span>
+        <span class="patient-details">
+          <span class="patient-item-name">${esc(p.patient_name || p.phone)}</span>
+          <span class="patient-item-phone">${esc(p.phone)}</span>
+        </span>
+        <span class="state-dot ${p.state ? 'state-dot--active' : ''}"></span>
+      </a>
+    `).join('');
+
+    document.querySelectorAll('.patient-list-item').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const href = (link as HTMLAnchorElement).href;
+        history.pushState(null, '', href);
+        const phone = (link as HTMLElement).dataset.phone ?? '';
+        const patient = allPatients.find(p => p.phone === phone);
+        document.querySelectorAll('.patient-list-item').forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+        if (patient) renderChat(patient);
+      });
     });
+  }
+
+  function renderChat(patient: Patient) {
+    const messages = parseConversation(patient.conversation_json);
+    chatEl.innerHTML = `
+      <div class="chat-header">
+        <span class="chat-flag">${LANG_FLAGS[patient.lang] ?? '🌐'}</span>
+        <div>
+          <div class="chat-name">${esc(patient.patient_name || patient.phone)}</div>
+          <div class="chat-meta">
+            ${esc(patient.phone)} · State: <strong>${esc(patient.state || 'idle')}</strong>
+            · Updated: ${esc(patient.updated_at || '—')}
+          </div>
+        </div>
+      </div>
+      <div class="chat-messages">
+        ${messages.length === 0
+          ? '<p class="chat-empty-msgs">No messages recorded.</p>'
+          : messages.map(m => renderMessage(m)).join('')
+        }
+      </div>
+    `;
+    // Auto-scroll to latest message
+    const msgsEl = chatEl.querySelector('.chat-messages');
+    if (msgsEl) msgsEl.scrollTop = msgsEl.scrollHeight;
+  }
+
+  function renderMessage(m: ConversationMessage): string {
+    const isBot = m.role === 'bot';
+    return `
+      <div class="msg-row ${isBot ? 'msg--bot' : 'msg--patient'}">
+        <div class="msg-bubble">
+          <p class="msg-text">${esc(m.text)}</p>
+          ${m.timestamp ? `<span class="msg-time">${esc(m.timestamp)}</span>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  async function load(apiKey: string, spreadsheetId: string) {
+    try {
+      const patients = await fetchPatients(apiKey, spreadsheetId);
+      allPatients = patients;
+      renderSidebar(patients);
+
+      const phone = getSelectedPhone();
+      const selected = patients.find(p => p.phone === phone) ?? patients[0];
+      if (selected) renderChat(selected);
+
+      searchEl.addEventListener('input', () => {
+        const q = searchEl.value.toLowerCase();
+        document.querySelectorAll<HTMLElement>('.patient-list-item').forEach(el => {
+          el.style.display = !q || (el.dataset.search ?? '').includes(q) ? '' : 'none';
+        });
+      });
+    } catch (err) {
+      listEl.innerHTML = `<p class="list-empty error-text">Error: ${esc((err as Error).message)}</p>`;
+    }
+  }
+
+  window.addEventListener('popstate', () => {
+    renderSidebar(allPatients);
+    const phone = getSelectedPhone();
+    const patient = allPatients.find(p => p.phone === phone) ?? allPatients[0];
+    if (patient) renderChat(patient);
+  });
+
+  (window as any).__clinicReady.then(({ apiKey, spreadsheetId }: { apiKey: string; spreadsheetId: string }) => {
+    load(apiKey, spreadsheetId);
   });
 </script>
 
 <style>
-  .clinic-shell { display: flex; min-height: 100vh; background: #f1f5f9; }
-  .clinic-main { flex: 1; padding: 32px; overflow-x: hidden; display: flex; flex-direction: column; }
-  .page-header { margin-bottom: 24px; }
+  .clinic-shell  { display: flex; min-height: 100vh; background: #f1f5f9; }
+  .clinic-main   { flex: 1; padding: 32px; overflow-x: hidden; display: flex; flex-direction: column; }
+  .page-header   { margin-bottom: 24px; }
   .page-header h1 { font-size: 1.5rem; font-weight: 700; color: #1e293b; margin: 0; }
-  .page-subtitle { color: #64748b; font-size: 0.875rem; margin: 4px 0 0; }
-  .conversations-layout { display: flex; gap: 20px; flex: 1; min-height: 0; }
+  .page-subtitle  { color: #64748b; font-size: 0.875rem; margin: 4px 0 0; }
+
+  .conversations-layout { display: flex; gap: 20px; flex: 1; min-height: 0; height: calc(100vh - 160px); }
+
   .patient-list {
-    width: 280px;
-    flex-shrink: 0;
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+    width: 280px; flex-shrink: 0; background: #fff;
+    border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    display: flex; flex-direction: column; overflow: hidden;
   }
-  .patient-list-search { padding: 12px; border-bottom: 1px solid #f1f5f9; }
+  .patient-list-search  { padding: 12px; border-bottom: 1px solid #f1f5f9; }
   .search-input { padding: 7px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.8rem; width: 100%; box-sizing: border-box; outline: none; }
+  .search-input:focus { border-color: #6366f1; }
   .patient-list-items { flex: 1; overflow-y: auto; }
+  .list-loading { padding: 24px; text-align: center; color: #94a3b8; font-size: 0.8rem; }
+  .list-empty   { padding: 24px; text-align: center; color: #94a3b8; font-size: 0.8rem; }
+  .error-text   { color: #dc2626 !important; }
+
   .patient-list-item {
     display: flex; align-items: center; gap: 10px; padding: 12px 16px;
     text-decoration: none; border-bottom: 1px solid #f8fafc; color: #1e293b;
@@ -116,29 +179,34 @@ const messages = selectedPatient ? parseConversation(selectedPatient.conversatio
   }
   .patient-list-item:hover { background: #f8fafc; }
   .patient-list-item.active { background: #eef2ff; border-left: 3px solid #6366f1; }
-  .patient-flag { font-size: 1.1rem; }
+  .patient-flag   { font-size: 1.1rem; }
   .patient-details { flex: 1; min-width: 0; }
-  .patient-item-name { display: block; font-size: 0.875rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .patient-item-name  { display: block; font-size: 0.875rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .patient-item-phone { display: block; font-size: 0.7rem; color: #94a3b8; }
-  .state-dot { width: 8px; height: 8px; border-radius: 50%; background: #e2e8f0; flex-shrink: 0; }
+  .state-dot       { width: 8px; height: 8px; border-radius: 50%; background: #e2e8f0; flex-shrink: 0; }
   .state-dot--active { background: #f59e0b; }
-  .list-empty { padding: 24px; text-align: center; color: #94a3b8; font-size: 0.8rem; }
+
   .chat-panel {
-    flex: 1;
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    min-width: 0;
+    flex: 1; background: #fff; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    display: flex; flex-direction: column; overflow: hidden; min-width: 0;
   }
+  .chat-empty { flex: 1; display: flex; align-items: center; justify-content: center; color: #94a3b8; }
   .chat-header {
     display: flex; align-items: center; gap: 12px; padding: 16px 20px;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid #f1f5f9; flex-shrink: 0;
   }
   .chat-flag { font-size: 1.6rem; }
   .chat-name { font-weight: 600; color: #1e293b; }
   .chat-meta { font-size: 0.75rem; color: #94a3b8; }
-  .chat-empty { flex: 1; display: flex; align-items: center; justify-content: center; color: #94a3b8; }
+  .chat-messages { flex: 1; overflow-y: auto; padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; }
+  .chat-empty-msgs { text-align: center; color: #94a3b8; margin: auto; }
+
+  .msg-row       { display: flex; }
+  .msg--bot      { justify-content: flex-start; }
+  .msg--patient  { justify-content: flex-end; }
+  .msg-bubble    { max-width: 70%; padding: 10px 14px; border-radius: 14px; }
+  .msg--bot .msg-bubble     { background: #f1f5f9; border-bottom-left-radius: 4px; }
+  .msg--patient .msg-bubble { background: #6366f1; color: #fff; border-bottom-right-radius: 4px; }
+  .msg-text  { margin: 0; font-size: 0.875rem; line-height: 1.4; white-space: pre-wrap; }
+  .msg-time  { display: block; font-size: 0.65rem; opacity: 0.6; margin-top: 4px; }
 </style>

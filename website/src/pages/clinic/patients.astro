@@ -1,23 +1,8 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import ClinicNav from '../../components/clinic/ClinicNav.astro';
-import PatientCard from '../../components/clinic/PatientCard.astro';
-import StatsCard from '../../components/clinic/StatsCard.astro';
-import { fetchPatients, fetchAppointments, LANG_FLAGS } from '../../lib/sheets';
-
-const [patients, appointments] = await Promise.all([fetchPatients(), fetchAppointments()]);
-
-const countByPhone: Record<string, number> = {};
-for (const apt of appointments) {
-  countByPhone[apt.patient_phone] = (countByPhone[apt.patient_phone] ?? 0) + 1;
-}
-
-const langCounts: Record<string, number> = {};
-for (const p of patients) {
-  langCounts[p.lang] = (langCounts[p.lang] ?? 0) + 1;
-}
-const topLang = Object.entries(langCounts).sort((a, b) => b[1] - a[1])[0];
-const topLangDisplay = topLang ? `${LANG_FLAGS[topLang[0]] ?? ''} ${topLang[1]}` : '—';
+import ClinicSetup from '../../components/clinic/ClinicSetup.astro';
+// Data is fetched client-side via ClinicSetup + sheets-client.ts
 ---
 
 <BaseLayout title="Patients — Clinic CRM">
@@ -25,67 +10,163 @@ const topLangDisplay = topLang ? `${LANG_FLAGS[topLang[0]] ?? ''} ${topLang[1]}`
     <ClinicNav />
     <main class="clinic-main">
       <header class="page-header">
-        <h1>Patients</h1>
-        <p class="page-subtitle">Registered patients and their session status</p>
+        <div>
+          <h1>Patients</h1>
+          <p class="page-subtitle">Registered patients and their session status</p>
+        </div>
+        <button id="btn-refresh" class="refresh-btn" style="display:none">↻ Refresh</button>
       </header>
 
-      <div class="stats-grid">
-        <StatsCard label="Total Patients" value={patients.length} icon="👥" color="blue" />
-        <StatsCard label="Active Sessions" value={patients.filter(p => p.state && p.state !== '').length} icon="💬" color="yellow" />
-        <StatsCard label="Top Language" value={topLangDisplay} icon="🌐" color="purple" />
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-skeleton"></div>
+        <div class="stat-skeleton"></div>
+        <div class="stat-skeleton"></div>
       </div>
 
       <div class="search-bar">
-        <input id="patient-search" type="search" placeholder="Search by name or phone..." class="search-input" />
+        <input id="patient-search" type="search" placeholder="Search by name or phone…" class="search-input" />
       </div>
 
-      <div class="patients-grid" id="patients-grid">
-        {patients.map(patient => (
-          <div class="patient-item"
-               data-search={`${patient.patient_name} ${patient.phone}`.toLowerCase()}>
-            <PatientCard patient={patient} appointmentCount={countByPhone[patient.phone] ?? 0} />
-          </div>
-        ))}
-        {patients.length === 0 && (
-          <p class="empty-state">No patients yet. Configure your Google Sheets API key to load data.</p>
-        )}
+      <div id="patients-grid" class="patients-grid">
+        <p class="loading-msg">Loading patients…</p>
       </div>
     </main>
   </div>
+  <ClinicSetup />
 </BaseLayout>
 
 <script>
-  (function() {
-    const PIN = '1234';
-    if (localStorage.getItem('clinic_pin_ok') !== 'true') {
-      const entered = prompt('Enter clinic PIN:');
-      if (entered !== PIN) {
-        document.body.innerHTML = '<p style="padding:40px;color:#ef4444;">Access denied.</p>';
-        return;
-      }
-      localStorage.setItem('clinic_pin_ok', 'true');
-    }
-  })();
+  import { fetchPatients, fetchAppointments, LANG_FLAGS, LANG_NAMES, esc } from '../../lib/sheets-client';
+  import type { Patient, Appointment } from '../../lib/sheets-client';
 
-  document.getElementById('patient-search')?.addEventListener('input', (e) => {
-    const q = (e.target as HTMLInputElement).value.toLowerCase();
-    document.querySelectorAll('.patient-item').forEach(el => {
-      const item = el as HTMLElement;
-      (item.style.display = !q || (item.dataset.search ?? '').includes(q) ? '' : 'none');
-    });
+  const statsEl   = document.getElementById('stats-grid')!;
+  const gridEl    = document.getElementById('patients-grid')!;
+  const searchEl  = document.getElementById('patient-search') as HTMLInputElement;
+  const refreshBtn = document.getElementById('btn-refresh') as HTMLButtonElement;
+
+  function renderStats(patients: Patient[], appointments: Appointment[]) {
+    const countByPhone: Record<string, number> = {};
+    for (const a of appointments) countByPhone[a.patient_phone] = (countByPhone[a.patient_phone] ?? 0) + 1;
+
+    const langCounts: Record<string, number> = {};
+    for (const p of patients) langCounts[p.lang] = (langCounts[p.lang] ?? 0) + 1;
+    const topLang = Object.entries(langCounts).sort((a, b) => b[1] - a[1])[0];
+    const topLangDisplay = topLang
+      ? `${LANG_FLAGS[topLang[0]] ?? ''} ${LANG_NAMES[topLang[0]] ?? topLang[0]}`
+      : '—';
+
+    statsEl.innerHTML = [
+      { label: 'Total Patients',  value: patients.length,                                              icon: '👥', color: 'blue'   },
+      { label: 'Active Sessions', value: patients.filter(p => p.state && p.state !== '').length,       icon: '💬', color: 'yellow' },
+      { label: 'Top Language',    value: topLangDisplay,                                               icon: '🌐', color: 'purple' },
+    ].map(c => `
+      <div class="stat-card stat--${c.color}">
+        <div class="stat-icon">${c.icon}</div>
+        <div class="stat-value">${esc(String(c.value))}</div>
+        <div class="stat-label">${esc(c.label)}</div>
+      </div>
+    `).join('');
+  }
+
+  function renderGrid(patients: Patient[], countByPhone: Record<string, number>) {
+    if (patients.length === 0) {
+      gridEl.innerHTML = '<p class="empty-state">No patients found. Make sure the Sessions tab has data.</p>';
+      return;
+    }
+
+    gridEl.innerHTML = patients.map(p => {
+      const count = countByPhone[p.phone] ?? 0;
+      const stateLabel = p.state || 'idle';
+      const isActive = !!p.state;
+      return `
+        <div class="patient-card" data-search="${esc(`${p.patient_name} ${p.phone}`.toLowerCase())}">
+          <div class="card-header">
+            <span class="lang-flag">${LANG_FLAGS[p.lang] ?? '🌐'}</span>
+            <div class="card-titles">
+              <div class="card-name">${esc(p.patient_name || p.phone)}</div>
+              <div class="card-phone">${esc(p.phone)}</div>
+            </div>
+            <span class="state-badge ${isActive ? 'state--active' : ''}">${esc(stateLabel)}</span>
+          </div>
+          <div class="card-body">
+            <div class="card-row"><span class="card-key">Specialty</span><span>${esc(p.specialty) || '—'}</span></div>
+            <div class="card-row"><span class="card-key">Last visit</span><span>${esc(p.last_visit) || '—'}</span></div>
+            <div class="card-row"><span class="card-key">Appointments</span><span>${count}</span></div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function load(apiKey: string, spreadsheetId: string) {
+    gridEl.innerHTML = '<p class="loading-msg">Loading patients…</p>';
+    try {
+      const [patients, appointments] = await Promise.all([
+        fetchPatients(apiKey, spreadsheetId),
+        fetchAppointments(apiKey, spreadsheetId),
+      ]);
+      const countByPhone: Record<string, number> = {};
+      for (const a of appointments) countByPhone[a.patient_phone] = (countByPhone[a.patient_phone] ?? 0) + 1;
+
+      renderStats(patients, appointments);
+      renderGrid(patients, countByPhone);
+      refreshBtn.style.display = '';
+      refreshBtn.onclick = () => load(apiKey, spreadsheetId);
+
+      searchEl.addEventListener('input', () => {
+        const q = searchEl.value.toLowerCase();
+        document.querySelectorAll<HTMLElement>('.patient-card').forEach(el => {
+          el.style.display = !q || (el.dataset.search ?? '').includes(q) ? '' : 'none';
+        });
+      });
+    } catch (err) {
+      gridEl.innerHTML = `<p class="error-state">Error: ${esc((err as Error).message)}</p>`;
+    }
+  }
+
+  (window as any).__clinicReady.then(({ apiKey, spreadsheetId }: { apiKey: string; spreadsheetId: string }) => {
+    load(apiKey, spreadsheetId);
   });
 </script>
 
 <style>
-  .clinic-shell { display: flex; min-height: 100vh; background: #f1f5f9; }
-  .clinic-main { flex: 1; padding: 32px; overflow-x: hidden; }
-  .page-header { margin-bottom: 24px; }
+  .clinic-shell  { display: flex; min-height: 100vh; background: #f1f5f9; }
+  .clinic-main   { flex: 1; padding: 32px; overflow-x: hidden; }
+  .page-header   { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
   .page-header h1 { font-size: 1.5rem; font-weight: 700; color: #1e293b; margin: 0; }
-  .page-subtitle { color: #64748b; font-size: 0.875rem; margin: 4px 0 0; }
-  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
-  .search-bar { margin-bottom: 20px; }
+  .page-subtitle  { color: #64748b; font-size: 0.875rem; margin: 4px 0 0; }
+  .refresh-btn    { padding: 7px 14px; border: 1px solid #e2e8f0; border-radius: 6px; background: #fff; font-size: 0.8rem; cursor: pointer; color: #475569; }
+  .refresh-btn:hover { background: #f8fafc; }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .stat-card  { background: #fff; border-radius: 10px; padding: 16px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .stat-icon  { font-size: 1.5rem; margin-bottom: 8px; }
+  .stat-value { font-size: 1.6rem; font-weight: 700; color: #1e293b; }
+  .stat-label { font-size: 0.75rem; color: #94a3b8; margin-top: 2px; }
+  .stat--blue .stat-value   { color: #2563eb; }
+  .stat--yellow .stat-value { color: #d97706; }
+  .stat--purple .stat-value { color: #7c3aed; }
+  .stat-skeleton { background: #e2e8f0; border-radius: 10px; height: 90px; animation: pulse 1.5s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+  .search-bar   { margin-bottom: 20px; }
   .search-input { padding: 8px 14px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.875rem; width: 280px; outline: none; }
   .search-input:focus { border-color: #6366f1; }
+
   .patients-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
-  .empty-state { grid-column: 1/-1; padding: 40px; text-align: center; color: #94a3b8; background: #fff; border-radius: 10px; }
+  .loading-msg   { padding: 40px; text-align: center; color: #94a3b8; grid-column: 1/-1; }
+  .empty-state   { padding: 40px; text-align: center; color: #94a3b8; background: #fff; border-radius: 10px; grid-column: 1/-1; }
+  .error-state   { padding: 24px; text-align: center; color: #dc2626; background: #fef2f2; border-radius: 10px; grid-column: 1/-1; }
+
+  .patient-card  { background: #fff; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.07); overflow: hidden; }
+  .card-header   { display: flex; align-items: center; gap: 12px; padding: 16px; border-bottom: 1px solid #f1f5f9; }
+  .lang-flag     { font-size: 1.5rem; }
+  .card-titles   { flex: 1; min-width: 0; }
+  .card-name     { font-weight: 600; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-phone    { font-size: 0.75rem; color: #94a3b8; }
+  .state-badge   { padding: 3px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 600; background: #f1f5f9; color: #64748b; white-space: nowrap; }
+  .state--active { background: #fef3c7; color: #d97706; }
+  .card-body     { padding: 12px 16px; }
+  .card-row      { display: flex; justify-content: space-between; padding: 4px 0; font-size: 0.8rem; color: #475569; }
+  .card-key      { color: #94a3b8; }
 </style>
