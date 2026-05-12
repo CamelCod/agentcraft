@@ -1,0 +1,208 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ClinicNav from '../../components/clinic/ClinicNav.astro';
+import ClinicSetup from '../../components/clinic/ClinicSetup.astro';
+// Data is fetched client-side via ClinicSetup + sheets-client.ts
+---
+
+<BaseLayout title="Appointments — Clinic CRM">
+  <div class="clinic-shell">
+    <ClinicNav />
+    <main class="clinic-main">
+      <header class="page-header">
+        <div>
+          <h1>Appointments</h1>
+          <p class="page-subtitle">All bookings and their current status</p>
+        </div>
+        <button id="btn-refresh" class="refresh-btn" style="display:none">↻ Refresh</button>
+      </header>
+
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-skeleton"></div>
+        <div class="stat-skeleton"></div>
+        <div class="stat-skeleton"></div>
+        <div class="stat-skeleton"></div>
+        <div class="stat-skeleton"></div>
+      </div>
+
+      <section id="table-section">
+        <p class="loading-msg">Loading appointments…</p>
+      </section>
+    </main>
+  </div>
+  <ClinicSetup />
+</BaseLayout>
+
+<script>
+  import { fetchAppointments, LANG_FLAGS, esc, starsHtml } from '../../lib/sheets-client';
+  import type { Appointment } from '../../lib/sheets-client';
+
+  const statsEl   = document.getElementById('stats-grid')!;
+  const tableEl   = document.getElementById('table-section')!;
+  const refreshBtn = document.getElementById('btn-refresh') as HTMLButtonElement;
+
+  const STATUS_COLOR: Record<string, string> = {
+    Scheduled: 'badge--blue', Completed: 'badge--green', 'No-show': 'badge--red', Cancelled: 'badge--gray',
+  };
+
+  function renderStats(apts: Appointment[]) {
+    const total     = apts.length;
+    const scheduled = apts.filter(a => a.status === 'Scheduled').length;
+    const completed = apts.filter(a => a.status === 'Completed').length;
+    const noShows   = apts.filter(a => a.status === 'No-show').length;
+    const noShowRate = total > 0 ? Math.round((noShows / total) * 100) : 0;
+    const ratings    = apts.filter(a => a.feedback_rating !== null).map(a => a.feedback_rating as number);
+    const avgRating  = ratings.length > 0
+      ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1) : '—';
+
+    statsEl.innerHTML = [
+      { label: 'Total Bookings', value: total,           icon: '📋', color: 'blue'   },
+      { label: 'Scheduled',      value: scheduled,       icon: '📅', color: 'purple' },
+      { label: 'Completed',      value: completed,       icon: '✅', color: 'green'  },
+      { label: 'No-show Rate',   value: `${noShowRate}%`, icon: '⚠️', color: noShowRate > 20 ? 'red' : 'yellow' },
+      { label: 'Avg Rating',     value: avgRating,       icon: '⭐', color: 'green'  },
+    ].map(c => `
+      <div class="stat-card stat--${c.color}">
+        <div class="stat-icon">${c.icon}</div>
+        <div class="stat-value">${esc(String(c.value))}</div>
+        <div class="stat-label">${esc(c.label)}</div>
+      </div>
+    `).join('');
+  }
+
+  function renderTable(apts: Appointment[]) {
+    if (apts.length === 0) {
+      tableEl.innerHTML = '<p class="empty-state">No appointments found. Make sure the Appointments tab has data.</p>';
+      return;
+    }
+
+    tableEl.innerHTML = `
+      <div class="table-controls">
+        <input id="apt-search" type="search" placeholder="Search patient or doctor…" class="search-input" />
+        <div class="filter-chips">
+          <button class="chip chip--active" data-filter="all">All</button>
+          <button class="chip" data-filter="Scheduled">Scheduled</button>
+          <button class="chip" data-filter="Completed">Completed</button>
+          <button class="chip" data-filter="No-show">No-show</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="apt-table" id="apt-table">
+          <thead><tr>
+            <th>Date / Time</th><th>Patient</th><th>Doctor</th>
+            <th>Specialty</th><th>Lang</th><th>Status</th><th>Rating</th>
+          </tr></thead>
+          <tbody>
+            ${apts.map(a => `
+              <tr data-status="${esc(a.status)}"
+                  data-search="${esc(`${a.patient_name} ${a.doctor_name} ${a.specialty}`.toLowerCase())}">
+                <td class="apt-date">${esc(a.date_time) || '—'}</td>
+                <td>
+                  <div class="patient-name">${esc(a.patient_name) || '—'}</div>
+                  <div class="patient-phone">${esc(a.patient_phone)}</div>
+                </td>
+                <td>${esc(a.doctor_name) || '—'}</td>
+                <td>${esc(a.specialty) || '—'}</td>
+                <td class="lang-cell">${LANG_FLAGS[a.lang] ?? esc(a.lang)}</td>
+                <td><span class="badge ${STATUS_COLOR[a.status] ?? 'badge--gray'}">${esc(a.status)}</span></td>
+                <td class="rating-cell">${starsHtml(a.feedback_rating)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    const searchInput = document.getElementById('apt-search') as HTMLInputElement;
+    const chips = document.querySelectorAll('.chip');
+    let activeFilter = 'all';
+
+    function applyFilters() {
+      const q = searchInput.value.toLowerCase();
+      document.querySelectorAll('#apt-table tbody tr').forEach(row => {
+        const el = row as HTMLElement;
+        const ok = (activeFilter === 'all' || el.dataset.status === activeFilter)
+                && (!q || (el.dataset.search ?? '').includes(q));
+        el.style.display = ok ? '' : 'none';
+      });
+    }
+
+    searchInput.addEventListener('input', applyFilters);
+    chips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        chips.forEach(c => c.classList.remove('chip--active'));
+        chip.classList.add('chip--active');
+        activeFilter = (chip as HTMLElement).dataset.filter ?? 'all';
+        applyFilters();
+      });
+    });
+  }
+
+  async function load(apiKey: string, spreadsheetId: string) {
+    tableEl.innerHTML = '<p class="loading-msg">Loading appointments…</p>';
+    try {
+      const apts = await fetchAppointments(apiKey, spreadsheetId);
+      renderStats(apts);
+      renderTable(apts);
+      refreshBtn.style.display = '';
+      refreshBtn.onclick = () => load(apiKey, spreadsheetId);
+    } catch (err) {
+      tableEl.innerHTML = `<p class="error-state">Error: ${esc((err as Error).message)}</p>`;
+    }
+  }
+
+  (window as any).__clinicReady.then(({ apiKey, spreadsheetId }: { apiKey: string; spreadsheetId: string }) => {
+    load(apiKey, spreadsheetId);
+  });
+</script>
+
+<style>
+  .clinic-shell  { display: flex; min-height: 100vh; background: #f1f5f9; }
+  .clinic-main   { flex: 1; padding: 32px; overflow-x: hidden; }
+  .page-header   { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+  .page-header h1 { font-size: 1.5rem; font-weight: 700; color: #1e293b; margin: 0; }
+  .page-subtitle  { color: #64748b; font-size: 0.875rem; margin: 4px 0 0; }
+  .refresh-btn    { padding: 7px 14px; border: 1px solid #e2e8f0; border-radius: 6px; background: #fff; font-size: 0.8rem; cursor: pointer; color: #475569; }
+  .refresh-btn:hover { background: #f8fafc; }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 28px; }
+  .stat-card  { background: #fff; border-radius: 10px; padding: 16px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .stat-icon  { font-size: 1.5rem; margin-bottom: 8px; }
+  .stat-value { font-size: 1.6rem; font-weight: 700; color: #1e293b; }
+  .stat-label { font-size: 0.75rem; color: #94a3b8; margin-top: 2px; }
+  .stat--blue .stat-value   { color: #2563eb; }
+  .stat--green .stat-value  { color: #16a34a; }
+  .stat--purple .stat-value { color: #7c3aed; }
+  .stat--yellow .stat-value { color: #d97706; }
+  .stat--red .stat-value    { color: #dc2626; }
+  .stat-skeleton { background: #e2e8f0; border-radius: 10px; height: 90px; animation: pulse 1.5s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+  .loading-msg  { padding: 40px; text-align: center; color: #94a3b8; }
+  .empty-state  { padding: 40px; text-align: center; color: #94a3b8; background: #fff; border-radius: 10px; }
+  .error-state  { padding: 24px; text-align: center; color: #dc2626; background: #fef2f2; border-radius: 10px; }
+
+  .table-controls { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+  .search-input   { padding: 8px 14px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.875rem; width: 260px; outline: none; }
+  .search-input:focus { border-color: #6366f1; }
+  .filter-chips   { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip           { padding: 5px 12px; border-radius: 20px; border: 1px solid #e2e8f0; background: #f8fafc; font-size: 0.8rem; cursor: pointer; color: #64748b; }
+  .chip--active   { background: #6366f1; color: #fff; border-color: #6366f1; }
+
+  .table-wrap  { overflow-x: auto; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .apt-table   { width: 100%; border-collapse: collapse; background: #fff; font-size: 0.875rem; }
+  .apt-table th { background: #f8fafc; padding: 12px 16px; text-align: left; font-weight: 600; color: #475569; font-size: 0.8rem; border-bottom: 1px solid #e2e8f0; }
+  .apt-table td { padding: 12px 16px; border-bottom: 1px solid #f1f5f9; color: #1e293b; vertical-align: middle; }
+  .apt-table tr:last-child td { border-bottom: none; }
+  .apt-table tr:hover td { background: #f8fafc; }
+  .apt-date     { font-family: monospace; font-size: 0.8rem; color: #475569; white-space: nowrap; }
+  .patient-name { font-weight: 500; }
+  .patient-phone { font-size: 0.75rem; color: #94a3b8; }
+  .lang-cell    { font-size: 1.1rem; }
+  .rating-cell  { font-size: 0.75rem; color: #f59e0b; white-space: nowrap; }
+  .badge        { padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 500; }
+  .badge--blue  { background: #eff6ff; color: #2563eb; }
+  .badge--green { background: #f0fdf4; color: #16a34a; }
+  .badge--red   { background: #fef2f2; color: #dc2626; }
+  .badge--gray  { background: #f8fafc; color: #64748b; }
+</style>

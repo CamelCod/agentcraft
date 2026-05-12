@@ -1,0 +1,163 @@
+---
+// No server-side data needed — all logic runs client-side
+---
+
+<div id="clinic-overlay" role="dialog" aria-modal="true" aria-label="Clinic setup" style="display:none">
+  <div class="setup-card">
+    <div class="setup-icon">🏥</div>
+    <h2 class="setup-title">Connect Google Sheets</h2>
+    <p class="setup-desc">
+      Enter your Sheets API key and spreadsheet ID to load live clinic data.
+      Credentials are stored only in your browser's localStorage.
+    </p>
+    <form id="setup-form" novalidate>
+      <div class="field">
+        <label for="input-key">Sheets API Key</label>
+        <input id="input-key" type="password" placeholder="AIzaSy…" autocomplete="off" spellcheck="false" />
+      </div>
+      <div class="field">
+        <label for="input-id">Spreadsheet ID</label>
+        <input id="input-id" type="text" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms" spellcheck="false" />
+      </div>
+      <div id="setup-error" class="setup-error" style="display:none" role="alert"></div>
+      <button type="submit" class="setup-btn">Save &amp; Load Data</button>
+      <button type="button" id="setup-cancel" class="cancel-btn" style="display:none">Cancel</button>
+    </form>
+  </div>
+</div>
+
+<script>
+  declare global {
+    interface Window {
+      __clinicReady: Promise<{ apiKey: string; spreadsheetId: string }>;
+    }
+  }
+
+  const overlay    = document.getElementById('clinic-overlay')!;
+  const form       = document.getElementById('setup-form') as HTMLFormElement;
+  const errorEl    = document.getElementById('setup-error')!;
+  const cancelBtn  = document.getElementById('setup-cancel') as HTMLButtonElement;
+
+  window.__clinicReady = new Promise<{ apiKey: string; spreadsheetId: string }>((resolve) => {
+    // ── 1. PIN check ────────────────────────────────────────────────
+    const PIN = '1234';
+    if (localStorage.getItem('clinic_pin_ok') !== 'true') {
+      const entered = prompt('Enter clinic PIN:');
+      if (entered !== PIN) {
+        document.body.innerHTML =
+          '<p style="padding:40px;font-family:sans-serif;font-size:1.2rem;color:#ef4444">Access denied.</p>';
+        return;
+      }
+      localStorage.setItem('clinic_pin_ok', 'true');
+    }
+
+    // ── 2. Config check ─────────────────────────────────────────────
+    const savedKey = localStorage.getItem('clinic_sheets_key') ?? '';
+    const savedId  = localStorage.getItem('clinic_sheets_id') ?? '';
+    if (savedKey && savedId) {
+      resolve({ apiKey: savedKey, spreadsheetId: savedId });
+      return;
+    }
+
+    showSetup(resolve);
+  });
+
+  // Allow the ClinicNav "Settings" button to re-open setup
+  document.addEventListener('clinic:show-setup', () => {
+    showSetup((cfg) => {
+      // After reconfigure, reload the page so data re-fetches
+      localStorage.setItem('clinic_sheets_key', cfg.apiKey);
+      localStorage.setItem('clinic_sheets_id', cfg.spreadsheetId);
+      window.location.reload();
+    });
+  });
+
+  function showSetup(resolve: (cfg: { apiKey: string; spreadsheetId: string }) => void) {
+    const hasExisting = !!(localStorage.getItem('clinic_sheets_key'));
+    cancelBtn.style.display = hasExisting ? '' : 'none';
+    overlay.style.display = 'flex';
+
+    cancelBtn.onclick = () => { overlay.style.display = 'none'; };
+
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const key = (document.getElementById('input-key') as HTMLInputElement).value.trim();
+      const id  = (document.getElementById('input-id')  as HTMLInputElement).value.trim();
+      if (!key || !id) {
+        showError('Both fields are required.');
+        return;
+      }
+
+      const btn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+      btn.textContent = 'Verifying…';
+      btn.disabled = true;
+      errorEl.style.display = 'none';
+
+      try {
+        // Lightweight verification: fetch spreadsheet metadata
+        const url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(id)}?key=${encodeURIComponent(key)}&fields=spreadsheetId`;
+        const res = await fetch(url);
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body?.error?.message ?? `API error ${res.status}`);
+        }
+        localStorage.setItem('clinic_sheets_key', key);
+        localStorage.setItem('clinic_sheets_id', id);
+        overlay.style.display = 'none';
+        resolve({ apiKey: key, spreadsheetId: id });
+      } catch (err) {
+        showError((err as Error).message);
+        btn.textContent = 'Save & Load Data';
+        btn.disabled = false;
+      }
+    };
+  }
+
+  function showError(msg: string) {
+    errorEl.textContent = msg;
+    errorEl.style.display = 'block';
+  }
+</script>
+
+<style>
+  #clinic-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  .setup-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 40px;
+    width: 100%;
+    max-width: 440px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  }
+  .setup-icon  { font-size: 2.5rem; text-align: center; margin-bottom: 12px; }
+  .setup-title { font-size: 1.4rem; font-weight: 700; color: #1e293b; text-align: center; margin: 0 0 8px; }
+  .setup-desc  { font-size: 0.85rem; color: #64748b; text-align: center; margin: 0 0 24px; line-height: 1.5; }
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 0.8rem; font-weight: 600; color: #475569; margin-bottom: 6px; }
+  .field input {
+    width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0;
+    border-radius: 8px; font-size: 0.875rem; outline: none; box-sizing: border-box; font-family: monospace;
+  }
+  .field input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
+  .setup-error { background: #fef2f2; color: #dc2626; border-radius: 8px; padding: 10px 12px; font-size: 0.8rem; margin-bottom: 12px; }
+  .setup-btn {
+    width: 100%; padding: 12px; background: #6366f1; color: #fff; border: none;
+    border-radius: 8px; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: background 0.15s;
+  }
+  .setup-btn:hover:not(:disabled) { background: #4f46e5; }
+  .setup-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .cancel-btn {
+    width: 100%; margin-top: 10px; padding: 10px; background: none; color: #64748b;
+    border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.85rem; cursor: pointer;
+  }
+  .cancel-btn:hover { background: #f8fafc; }
+</style>

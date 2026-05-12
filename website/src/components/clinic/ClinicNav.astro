@@ -1,0 +1,115 @@
+---
+const base = import.meta.env.BASE_URL;
+const navItems = [
+  { href: `${base}clinic/appointments`, label: 'Appointments', icon: '📅' },
+  { href: `${base}clinic/patients`, label: 'Patients', icon: '👥' },
+  { href: `${base}clinic/conversations`, label: 'Conversations', icon: '💬' },
+  { href: `${base}clinic/analytics`, label: 'Analytics', icon: '📊' },
+];
+---
+
+<aside class="clinic-sidebar">
+  <div class="sidebar-header">
+    <span class="sidebar-logo">🏥</span>
+    <span class="sidebar-title">Clinic CRM</span>
+  </div>
+  <nav class="sidebar-nav">
+    {navItems.map(item => (
+      <a href={item.href} class="nav-item">
+        <span class="nav-icon">{item.icon}</span>
+        <span class="nav-label">{item.label}</span>
+      </a>
+    ))}
+  </nav>
+  <div class="sidebar-footer">
+    <button id="clinic-settings" class="settings-btn">⚙️ Settings</button>
+    <button id="clinic-logout" class="logout-btn">Sign out</button>
+  </div>
+</aside>
+
+<script>
+  const currentPath = window.location.pathname;
+  document.querySelectorAll('.nav-item').forEach(link => {
+    const href = link.getAttribute('href') ?? '';
+    if (currentPath.startsWith(href) && href !== '/') {
+      link.classList.add('active');
+    }
+  });
+
+  document.getElementById('clinic-settings')?.addEventListener('click', () => {
+    document.dispatchEvent(new CustomEvent('clinic:show-setup'));
+  });
+
+  document.getElementById('clinic-logout')?.addEventListener('click', () => {
+    localStorage.removeItem('clinic_pin_ok');
+    window.location.reload();
+  });
+</script>
+
+<style>
+  .clinic-sidebar {
+    width: 220px;
+    min-height: 100vh;
+    background: #1e293b;
+    color: #cbd5e1;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+  .sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid #334155;
+  }
+  .sidebar-logo { font-size: 1.4rem; }
+  .sidebar-title { font-weight: 700; font-size: 1rem; color: #f1f5f9; }
+  .sidebar-nav {
+    flex: 1;
+    padding: 12px 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    color: #94a3b8;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: background 0.15s, color 0.15s;
+    border-left: 3px solid transparent;
+  }
+  .nav-item:hover, .nav-item.active {
+    background: #0f172a;
+    color: #f1f5f9;
+    border-left-color: #6366f1;
+  }
+  .nav-icon { font-size: 1rem; }
+  .sidebar-footer { padding: 16px 20px; border-top: 1px solid #334155; }
+  .settings-btn {
+    background: none;
+    border: 1px solid #475569;
+    color: #94a3b8;
+    padding: 7px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    width: 100%;
+    margin-bottom: 8px;
+  }
+  .settings-btn:hover { background: #334155; color: #f1f5f9; }
+  .logout-btn {
+    background: none;
+    border: 1px solid #475569;
+    color: #94a3b8;
+    padding: 7px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    width: 100%;
+  }
+  .logout-btn:hover { background: #334155; color: #f1f5f9; }
+</style>

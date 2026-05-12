@@ -1,0 +1,42 @@
+---
+interface Props {
+  label: string;
+  value: string | number;
+  trend?: string;
+  icon?: string;
+  color?: 'blue' | 'green' | 'yellow' | 'red' | 'purple';
+}
+const { label, value, trend, icon = '📈', color = 'blue' } = Astro.props;
+---
+
+<div class={`stats-card stats-card--${color}`}>
+  <div class="stats-icon">{icon}</div>
+  <div class="stats-body">
+    <div class="stats-value">{value}</div>
+    <div class="stats-label">{label}</div>
+    {trend && <div class="stats-trend">{trend}</div>}
+  </div>
+</div>
+
+<style>
+  .stats-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    border-left: 4px solid #6366f1;
+  }
+  .stats-card--blue  { border-left-color: #6366f1; }
+  .stats-card--green { border-left-color: #10b981; }
+  .stats-card--yellow{ border-left-color: #f59e0b; }
+  .stats-card--red   { border-left-color: #ef4444; }
+  .stats-card--purple{ border-left-color: #8b5cf6; }
+  .stats-icon { font-size: 1.8rem; }
+  .stats-body { flex: 1; }
+  .stats-value { font-size: 1.75rem; font-weight: 700; color: #1e293b; line-height: 1; }
+  .stats-label { font-size: 0.8rem; color: #64748b; margin-top: 4px; }
+  .stats-trend { font-size: 0.75rem; color: #10b981; margin-top: 6px; }
+</style>

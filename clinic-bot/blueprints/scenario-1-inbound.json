@@ -1,0 +1,551 @@
+{
+  "name": "Clinic Bot — WhatsApp Inbound Handler",
+  "flow": [
+    {
+      "id": 1,
+      "mapper": {},
+      "module": "whatsapp-business-cloud:watchEvents2",
+      "version": 1,
+      "metadata": {
+        "restore": {
+          "parameters": {
+            "__IMTHOOK__": {
+              "label": "Clinic Bot — WhatsApp Inbound"
+            }
+          }
+        },
+        "designer": {
+          "x": 0,
+          "y": 0
+        }
+      },
+      "parameters": {
+        "__IMTHOOK__": 4117904
+      }
+    },
+    {
+      "id": 2,
+      "filter": {
+        "name": "Messages only (skip status events)",
+        "conditions": [
+          [
+            {
+              "a": "{{1.field}}",
+              "b": "messages",
+              "o": "text:equal"
+            }
+          ]
+        ]
+      },
+      "mapper": {},
+      "module": "google-sheets:filterRows",
+      "version": 2,
+      "metadata": {
+        "restore": {
+          "parameters": {
+            "mode": {
+              "label": "Enter manually"
+            },
+            "__IMTCONN__": {
+              "data": {
+                "scoped": "true",
+                "connection": "google"
+              },
+              "label": "My Google connection (aihamalhawar@gmail.com)"
+            }
+          }
+        },
+        "designer": {
+          "x": 300,
+          "y": 0
+        }
+      },
+      "parameters": {
+        "mode": "map",
+        "limit": 1,
+        "sheetId": "Sessions",
+        "__IMTCONN__": 7231941,
+        "spreadsheetId": "REPLACE_WITH_SPREADSHEET_ID",
+        "tableFirstRow": "A1:Z1",
+        "includesHeaders": true
+      }
+    },
+    {
+      "id": 3,
+      "mapper": {},
+      "module": "google-sheets:filterRows",
+      "version": 2,
+      "metadata": {
+        "restore": {
+          "parameters": {
+            "mode": {
+              "label": "Enter manually"
+            },
+            "__IMTCONN__": {
+              "data": {
+                "scoped": "true",
+                "connection": "google"
+              },
+              "label": "My Google connection (aihamalhawar@gmail.com)"
+            }
+          }
+        },
+        "designer": {
+          "x": 600,
+          "y": 0
+        }
+      },
+      "parameters": {
+        "mode": "map",
+        "limit": 1,
+        "sheetId": "Translations",
+        "__IMTCONN__": 7231941,
+        "spreadsheetId": "REPLACE_WITH_SPREADSHEET_ID",
+        "tableFirstRow": "A1:Z1",
+        "includesHeaders": true
+      }
+    },
+    {
+      "id": 4,
+      "module": "builtin:BasicRouter",
+      "routes": [
+        {
+          "flow": [
+            {
+              "id": 5,
+              "filter": {
+                "name": "NEW — no session exists",
+                "conditions": [
+                  [
+                    {
+                      "a": "{{2.phone}}",
+                      "b": "",
+                      "o": "text:notexist"
+                    }
+                  ]
+                ]
+              },
+              "mapper": {
+                "to": "{{1.value.messages[].from}}",
+                "type": "interactive",
+                "fromId": "REPLACE_WITH_PHONE_NUMBER_ID",
+                "interactive": {
+                  "body": {
+                    "text": "مرحباً بك في عيادتنا 🏥\nWelcome to our clinic 🏥\nاختر لغتك / Choose your language:"
+                  },
+                  "type": "button",
+                  "action": {
+                    "buttons": [
+                      {
+                        "type": "reply",
+                        "reply": {
+                          "id": "lang_ar",
+                          "title": "العربية 🇦🇪"
+                        }
+                      },
+                      {
+                        "type": "reply",
+                        "reply": {
+                          "id": "lang_other",
+                          "title": "Other Language"
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
+              "module": "whatsapp-business-cloud:sendMessage",
+              "version": 1,
+              "metadata": {
+                "restore": {
+                  "expect": {
+                    "type": {
+                      "label": "Interactive"
+                    }
+                  },
+                  "parameters": {
+                    "__IMTCONN__": {
+                      "data": {
+                        "scoped": "true",
+                        "connection": "whatsapp-business-cloud"
+                      },
+                      "label": "My WhatsApp Business Cloud connection"
+                    }
+                  }
+                },
+                "designer": {
+                  "x": 900,
+                  "y": -400
+                }
+              },
+              "parameters": {
+                "__IMTCONN__": 14088540
+              }
+            },
+            {
+              "id": 6,
+              "mapper": {
+                "A": "{{1.value.messages[].from}}",
+                "B": "en",
+                "C": "AWAIT_LANG",
+                "D": "",
+                "E": "",
+                "F": "",
+                "G": "",
+                "H": "",
+                "I": "[]",
+                "J": "",
+                "K": "{{now}}"
+              },
+              "module": "google-sheets:addRow",
+              "version": 2,
+              "metadata": {
+                "restore": {
+                  "parameters": {
+                    "mode": {
+                      "label": "Enter manually"
+                    },
+                    "__IMTCONN__": {
+                      "data": {
+                        "scoped": "true",
+                        "connection": "google"
+                      },
+                      "label": "My Google connection (aihamalhawar@gmail.com)"
+                    }
+                  }
+                },
+                "designer": {
+                  "x": 1200,
+                  "y": -400
+                }
+              },
+              "parameters": {
+                "mode": "map",
+                "sheetId": "Sessions",
+                "__IMTCONN__": 7231941,
+                "spreadsheetId": "REPLACE_WITH_SPREADSHEET_ID",
+                "tableFirstRow": "A1:Z1",
+                "includesHeaders": true,
+                "valueInputOption": "USER_ENTERED",
+                "insertUnformatted": false
+              }
+            }
+          ]
+        },
+        {
+          "flow": [
+            {
+              "id": 7,
+              "filter": {
+                "name": "AWAIT_LANG — language picker",
+                "conditions": [
+                  [
+                    {
+                      "a": "{{2.C}}",
+                      "b": "AWAIT_LANG",
+                      "o": "text:equal"
+                    }
+                  ]
+                ]
+              },
+              "mapper": {
+                "to": "{{1.value.messages[].from}}",
+                "type": "interactive",
+                "fromId": "REPLACE_WITH_PHONE_NUMBER_ID",
+                "interactive": {
+                  "body": {
+                    "text": "Please select your language / الرجاء اختيار لغتك"
+                  },
+                  "type": "list",
+                  "action": {
+                    "button": "Select / اختر",
+                    "sections": [
+                      {
+                        "rows": [
+                          { "id": "lang_en", "title": "English 🇬🇧" },
+                          { "id": "lang_hi", "title": "हिंदी (Hindi) 🇮🇳" },
+                          { "id": "lang_ur", "title": "اردو (Urdu) 🇵🇰" },
+                          { "id": "lang_tl", "title": "Filipino 🇵🇭" },
+                          { "id": "lang_ml", "title": "മലയാളം 🇮🇳" },
+                          { "id": "lang_fr", "title": "Français 🇫🇷" }
+                        ],
+                        "title": "Languages / اللغات"
+                      }
+                    ]
+                  }
+                }
+              },
+              "module": "whatsapp-business-cloud:sendMessage",
+              "version": 1,
+              "metadata": {
+                "restore": {
+                  "expect": { "type": { "label": "Interactive" } },
+                  "parameters": {
+                    "__IMTCONN__": {
+                      "data": { "scoped": "true", "connection": "whatsapp-business-cloud" },
+                      "label": "My WhatsApp Business Cloud connection"
+                    }
+                  }
+                },
+                "designer": { "x": 900, "y": 0 }
+              },
+              "parameters": { "__IMTCONN__": 14088540 }
+            },
+            {
+              "id": 8,
+              "mapper": { "C": "AWAIT_LANG2", "K": "{{now}}" },
+              "module": "google-sheets:updateRow",
+              "version": 2,
+              "metadata": {
+                "restore": {
+                  "parameters": {
+                    "mode": { "label": "Enter manually" },
+                    "__IMTCONN__": {
+                      "data": { "scoped": "true", "connection": "google" },
+                      "label": "My Google connection (aihamalhawar@gmail.com)"
+                    }
+                  }
+                },
+                "designer": { "x": 1200, "y": 0 }
+              },
+              "parameters": {
+                "mode": "map",
+                "sheetId": "Sessions",
+                "rowNumber": "{{2.rowNumber}}",
+                "__IMTCONN__": 7231941,
+                "spreadsheetId": "REPLACE_WITH_SPREADSHEET_ID",
+                "tableFirstRow": "A1:Z1",
+                "includesHeaders": true,
+                "valueInputOption": "USER_ENTERED"
+              }
+            }
+          ]
+        },
+        {
+          "flow": [
+            {
+              "id": 9,
+              "filter": {
+                "name": "AWAIT_SPECIALTY — specialty list",
+                "conditions": [
+                  [
+                    {
+                      "a": "{{2.C}}",
+                      "b": "AWAIT_SPECIALTY",
+                      "o": "text:equal"
+                    }
+                  ]
+                ]
+              },
+              "mapper": {
+                "to": "{{1.value.messages[].from}}",
+                "type": "interactive",
+                "fromId": "REPLACE_WITH_PHONE_NUMBER_ID",
+                "interactive": {
+                  "body": { "text": "{{3.select_specialty}}" },
+                  "type": "list",
+                  "action": {
+                    "button": "Select",
+                    "sections": [
+                      {
+                        "rows": [
+                          { "id": "spec_general", "title": "General Medicine / طب عام" },
+                          { "id": "spec_pediatrics", "title": "Pediatrics / أطفال" },
+                          { "id": "spec_dermatology", "title": "Dermatology / جلدية" },
+                          { "id": "spec_cardiology", "title": "Cardiology / قلب" }
+                        ],
+                        "title": "Specialties"
+                      }
+                    ]
+                  }
+                }
+              },
+              "module": "whatsapp-business-cloud:sendMessage",
+              "version": 1,
+              "metadata": {
+                "restore": {
+                  "parameters": {
+                    "__IMTCONN__": {
+                      "data": { "scoped": "true", "connection": "whatsapp-business-cloud" },
+                      "label": "My WhatsApp Business Cloud connection"
+                    }
+                  }
+                },
+                "designer": { "x": 900, "y": 400 }
+              },
+              "parameters": { "__IMTCONN__": 14088540 }
+            },
+            {
+              "id": 10,
+              "mapper": {
+                "C": "AWAIT_DOCTOR",
+                "D": "{{1.value.messages[].interactive.list_reply.id}}",
+                "K": "{{now}}"
+              },
+              "module": "google-sheets:updateRow",
+              "version": 2,
+              "metadata": {
+                "restore": {
+                  "parameters": {
+                    "mode": { "label": "Enter manually" },
+                    "__IMTCONN__": {
+                      "data": { "scoped": "true", "connection": "google" },
+                      "label": "My Google connection (aihamalhawar@gmail.com)"
+                    }
+                  }
+                },
+                "designer": { "x": 1200, "y": 400 }
+              },
+              "parameters": {
+                "mode": "map",
+                "sheetId": "Sessions",
+                "rowNumber": "{{2.rowNumber}}",
+                "__IMTCONN__": 7231941,
+                "spreadsheetId": "REPLACE_WITH_SPREADSHEET_ID",
+                "tableFirstRow": "A1:Z1",
+                "includesHeaders": true,
+                "valueInputOption": "USER_ENTERED"
+              }
+            }
+          ]
+        },
+        {
+          "flow": [
+            {
+              "id": 11,
+              "filter": {
+                "name": "AWAIT_CONFIRM — confirmed",
+                "conditions": [
+                  [
+                    {
+                      "a": "{{2.C}}",
+                      "b": "AWAIT_CONFIRM",
+                      "o": "text:equal"
+                    },
+                    {
+                      "a": "{{1.value.messages[].interactive.button_reply.id}}",
+                      "b": "confirm",
+                      "o": "text:equal"
+                    }
+                  ]
+                ]
+              },
+              "mapper": {
+                "to": "{{1.value.messages[].from}}",
+                "text": { "body": "{{3.booking_confirmed}}", "preview_url": false },
+                "type": "text",
+                "fromId": "REPLACE_WITH_PHONE_NUMBER_ID"
+              },
+              "module": "whatsapp-business-cloud:sendMessage",
+              "version": 1,
+              "metadata": {
+                "restore": {
+                  "expect": { "type": { "label": "Text" } },
+                  "parameters": {
+                    "__IMTCONN__": {
+                      "data": { "scoped": "true", "connection": "whatsapp-business-cloud" },
+                      "label": "My WhatsApp Business Cloud connection"
+                    }
+                  }
+                },
+                "designer": { "x": 900, "y": 800 }
+              },
+              "parameters": { "__IMTCONN__": 14088540 }
+            },
+            {
+              "id": 12,
+              "mapper": {
+                "A": "{{uuid()}}",
+                "B": "{{1.value.messages[].from}}",
+                "C": "{{2.H}}",
+                "D": "{{2.E}}",
+                "E": "{{2.D}}",
+                "F": "{{2.F}} {{2.G}}",
+                "G": "Scheduled",
+                "H": "{{2.B}}",
+                "I": "FALSE",
+                "J": "FALSE",
+                "K": "FALSE",
+                "L": "FALSE",
+                "M": "",
+                "N": "FALSE",
+                "O": "{{now}}"
+              },
+              "module": "google-sheets:addRow",
+              "version": 2,
+              "metadata": {
+                "restore": {
+                  "parameters": {
+                    "mode": { "label": "Enter manually" },
+                    "__IMTCONN__": {
+                      "data": { "scoped": "true", "connection": "google" },
+                      "label": "My Google connection (aihamalhawar@gmail.com)"
+                    }
+                  }
+                },
+                "designer": { "x": 1200, "y": 800 }
+              },
+              "parameters": {
+                "mode": "map",
+                "sheetId": "Appointments",
+                "__IMTCONN__": 7231941,
+                "spreadsheetId": "REPLACE_WITH_SPREADSHEET_ID",
+                "tableFirstRow": "A1:Z1",
+                "includesHeaders": true,
+                "valueInputOption": "USER_ENTERED",
+                "insertUnformatted": false
+              }
+            },
+            {
+              "id": 13,
+              "mapper": {},
+              "module": "google-sheets:clearRow",
+              "version": 2,
+              "metadata": {
+                "restore": {
+                  "parameters": {
+                    "mode": { "label": "Enter manually" },
+                    "__IMTCONN__": {
+                      "data": { "scoped": "true", "connection": "google" },
+                      "label": "My Google connection (aihamalhawar@gmail.com)"
+                    }
+                  }
+                },
+                "designer": { "x": 1500, "y": 800 }
+              },
+              "parameters": {
+                "mode": "map",
+                "sheetId": "Sessions",
+                "rowNumber": "{{2.rowNumber}}",
+                "__IMTCONN__": 7231941,
+                "spreadsheetId": "REPLACE_WITH_SPREADSHEET_ID"
+              }
+            }
+          ]
+        }
+      ],
+      "version": 1,
+      "metadata": {
+        "designer": { "x": 900, "y": 0 }
+      }
+    }
+  ],
+  "metadata": {
+    "instant": true,
+    "version": 1,
+    "designer": { "orphans": [] },
+    "scenario": {
+      "dlq": false,
+      "slots": null,
+      "dataloss": false,
+      "maxErrors": 3,
+      "autoCommit": true,
+      "roundtrips": 1,
+      "sequential": false,
+      "confidential": false,
+      "freshVariables": false,
+      "autoCommitTriggerLast": true
+    }
+  },
+  "scheduling": { "type": "immediately" }
+}
