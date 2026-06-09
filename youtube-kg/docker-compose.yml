@@ -134,14 +134,16 @@ services:
   # ─── Neo4j ───────────────────────────────────────────────────────────────
   neo4j:
     <<: *common-env
+    env_file: []
+    restart: unless-stopped
     image: neo4j:5.26-community
     environment:
       - NEO4J_AUTH=${NEO4J_USER}/${NEO4J_PASSWORD}
       - NEO4J_PLUGINS=["apoc"]
       - NEO4J_dbms_security_procedures_unrestricted=apoc.*
-      - NEO4J_dbms_memory_heap_initial__size=512m
-      - NEO4J_dbms_memory_heap_max__size=2G
-      - NEO4J_dbms_memory_pagecache_size=512m
+      - NEO4J_server_memory_heap_initial__size=512m
+      - NEO4J_server_memory_heap_max__size=2G
+      - NEO4J_server_memory_pagecache__size=512m
     volumes:
       - neo4j-data:/data
       - neo4j-logs:/logs
