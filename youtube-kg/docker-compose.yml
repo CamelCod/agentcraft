@@ -112,13 +112,6 @@ services:
       - WHISPER_MODEL=${WHISPER_MODEL:-medium}
     networks:
       - internal
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - capabilities: [gpu]
-              count: all
-              driver: nvidia
 
   # ─── PostgreSQL ──────────────────────────────────────────────────────────
   postgres:
