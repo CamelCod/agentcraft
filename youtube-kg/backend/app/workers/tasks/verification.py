@@ -8,7 +8,7 @@ from app.workers.celery_app import celery_app
     max_retries=2,
     autoretry_for=(Exception,),
 )
-def run_verification_task(self, project_id: str):
+def run_verification_task(self, project_id: str, job_id: str):
     from sqlalchemy import create_engine
     from sqlalchemy.orm import Session
     from app.config import get_settings
@@ -22,14 +22,13 @@ def run_verification_task(self, project_id: str):
     engine = create_engine(settings.sync_database_url)
 
     with Session(engine) as session:
-        job = Job(
-            project_id=uuid.UUID(project_id),
-            type="verification",
-            status=JobStatus.running,
-            started_at=datetime.now(timezone.utc),
-            celery_task_id=self.request.id,
-        )
-        session.add(job)
+        job = session.get(Job, uuid.UUID(job_id))
+        if not job:
+            return
+
+        job.status = JobStatus.running
+        job.started_at = datetime.now(timezone.utc)
+        job.celery_task_id = self.request.id
         session.flush()
 
         try:

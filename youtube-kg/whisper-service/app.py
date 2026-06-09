@@ -1,14 +1,14 @@
 """
 Whisper transcription microservice.
-Accepts an audio file path (local or MinIO-downloaded), returns timestamped transcript.
+Accepts an audio file upload, returns timestamped transcript.
 """
 import os
+import tempfile
 import time
-from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, File, HTTPException, UploadFile
+
 from faster_whisper import WhisperModel
-from pydantic import BaseModel
 
 app = FastAPI(title="Whisper Transcription Service")
 
@@ -26,11 +26,6 @@ def get_model() -> WhisperModel:
     return _model
 
 
-class TranscribeRequest(BaseModel):
-    audio_path: str
-    language: str | None = None  # None = auto-detect
-
-
 @app.on_event("startup")
 def warmup():
     get_model()
@@ -42,33 +37,40 @@ def health():
 
 
 @app.post("/transcribe")
-def transcribe(req: TranscribeRequest):
-    if not Path(req.audio_path).exists():
-        raise HTTPException(status_code=404, detail=f"Audio file not found: {req.audio_path}")
-
+def transcribe(
+    file: UploadFile = File(...),
+    language: str | None = None,
+):
     model = get_model()
     t0 = time.time()
 
-    segments_iter, info = model.transcribe(
-        req.audio_path,
-        language=req.language,
-        word_timestamps=True,
-        vad_filter=True,
-        vad_parameters={"min_silence_duration_ms": 500},
-    )
+    with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as tmp:
+        tmp.write(file.file.read())
+        tmp_path = tmp.name
 
-    segments = []
-    for seg in segments_iter:
-        words = []
-        if seg.words:
-            words = [{"word": w.word, "start": w.start, "end": w.end} for w in seg.words]
-        segments.append({
-            "id": seg.id,
-            "start": seg.start,
-            "end": seg.end,
-            "text": seg.text.strip(),
-            "words": words,
-        })
+    try:
+        segments_iter, info = model.transcribe(
+            tmp_path,
+            language=language,
+            word_timestamps=True,
+            vad_filter=True,
+            vad_parameters={"min_silence_duration_ms": 500},
+        )
+
+        segments = []
+        for seg in segments_iter:
+            words = []
+            if seg.words:
+                words = [{"word": w.word, "start": w.start, "end": w.end} for w in seg.words]
+            segments.append({
+                "id": seg.id,
+                "start": seg.start,
+                "end": seg.end,
+                "text": seg.text.strip(),
+                "words": words,
+            })
+    finally:
+        os.unlink(tmp_path)
 
     processing_time = time.time() - t0
 

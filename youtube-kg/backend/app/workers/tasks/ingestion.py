@@ -220,7 +220,6 @@ def extract_task(self, video_id: str, _, project_id: str, domain: str):
                     for t, s, e, r in results
                 ]
             }
-            video.status = VideoStatus.completed
             session.commit()
         except Exception as exc:
             video.status = VideoStatus.error
@@ -241,6 +240,7 @@ def extract_task(self, video_id: str, _, project_id: str, domain: str):
 def graph_write_task(self, video_id: str, _, project_id: str):
     import uuid as _uuid
     from app.models import Video
+    from app.models.video import VideoStatus
     from app.services import graph_service as graph
     from app.services.memory import embed_claim, COLLECTION_CLAIMS, get_qdrant
 
@@ -309,5 +309,8 @@ def graph_write_task(self, video_id: str, _, project_id: str):
                     embed_claim(claim_id, claim_data["text"], project_id, domain)
                 except Exception:
                     pass
+
+        video.status = VideoStatus.completed
+        session.commit()
 
     return video_id

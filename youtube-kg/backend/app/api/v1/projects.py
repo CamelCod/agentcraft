@@ -33,7 +33,8 @@ async def create_project(body: ProjectCreate, current_user: CurrentUser, db: DB)
     db.add(job)
     await db.flush()
 
-    # Dispatch Celery task
+    await db.commit()
+
     from app.workers.tasks.discovery import run_creator_discovery
     run_creator_discovery.delay(str(project.id), body.creator_url)
 
@@ -114,10 +115,12 @@ async def approve_domains(project_id: str, body: DomainApproveRequest, current_u
             video_ids.append(str(v.id))
             domain_map[str(v.id)] = domain_name
 
+        await db.commit()
         from app.workers.tasks.ingestion import launch_ingestion_pipeline
         launch_ingestion_pipeline(project_id, video_ids, domain_map)
+        return {"approved": approved, "rejected": rejected}
 
-    await db.flush()
+    await db.commit()
     return {"approved": approved, "rejected": rejected}
 
 

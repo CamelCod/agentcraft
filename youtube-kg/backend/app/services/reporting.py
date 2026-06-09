@@ -106,6 +106,8 @@ def assemble_report(
 
         if c.get("verification_status") == "verified":
             verified_claims.append(claim_entry)
+        elif c.get("verification_status") == "contradicted" and config.get("include_contradictions", True):
+            contradictions.append(claim_entry)
 
     # Build source appendix
     cited_yt_ids = set()

@@ -40,6 +40,7 @@ async def create_report(body: ReportCreate, current_user: CurrentUser, db: DB):
     )
     db.add(report)
     await db.flush()
+    await db.commit()
 
     from app.workers.tasks.reporting import generate_report_task
     generate_report_task.delay(str(report.id), body.project_id, body.config)

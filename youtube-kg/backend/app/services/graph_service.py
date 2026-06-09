@@ -104,7 +104,7 @@ def upsert_claim_node(
                 c.raw_confidence = $raw_confidence,
                 c.confidence_score = $raw_confidence,
                 c.verification_status = 'pending',
-                c.occurrence_count = coalesce(c.occurrence_count, 0) + 1
+                c.occurrence_count = 1
             """,
             id=claim_id,
             text=text,

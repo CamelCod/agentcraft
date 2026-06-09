@@ -155,6 +155,7 @@ def run_verification(project_id: str) -> dict:
                 graph.set_claim_corroborates(ca["id"], cb["id"], float(sim))
 
         # Check for contradictions within cluster (only for borderline similarity pairs)
+        contradicted_ids: set[str] = set()
         for i, ca in enumerate(cluster_claims):
             for cb in cluster_claims[i + 1:]:
                 sim = _cosine_sim(id_to_vec.get(ca["id"], centroid), id_to_vec.get(cb["id"], centroid))
@@ -164,10 +165,13 @@ def run_verification(project_id: str) -> dict:
                         graph.set_claim_contradicts(ca["id"], cb["id"], float(sim), reasoning)
                         graph.update_claim_score(ca["id"], confidence, "contradicted", len(source_videos))
                         graph.update_claim_score(cb["id"], confidence, "contradicted", len(source_videos))
+                        contradicted_ids.add(ca["id"])
+                        contradicted_ids.add(cb["id"])
                         stats["contradicted"] += 1
-                        continue
 
-            graph.update_claim_score(ca["id"], confidence, "verified", len(source_videos))
-            stats["verified"] += 1
+        for ca in cluster_claims:
+            if ca["id"] not in contradicted_ids:
+                graph.update_claim_score(ca["id"], confidence, "verified", len(source_videos))
+                stats["verified"] += 1
 
     return stats

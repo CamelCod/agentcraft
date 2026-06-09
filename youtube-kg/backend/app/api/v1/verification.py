@@ -25,8 +25,9 @@ async def trigger_verification(project_id: str, current_user: CurrentUser, db: D
     )
     db.add(job)
     await db.flush()
+    await db.commit()
 
     from app.workers.tasks.verification import run_verification_task
-    run_verification_task.delay(project_id)
+    run_verification_task.delay(project_id, str(job.id))
 
     return {"job_id": str(job.id), "status": "queued"}
