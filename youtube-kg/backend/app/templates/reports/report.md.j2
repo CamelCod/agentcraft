@@ -1,0 +1,50 @@
+# Knowledge Report: {{ creator.channel_name }}
+
+**Generated:** {{ generated_at[:10] }}
+**Videos Analyzed:** {{ config.total_videos_analyzed }}
+**Confidence Threshold:** {{ (config.confidence_threshold * 100)|round|int }}%
+
+---
+
+## Executive Summary
+
+{{ sections.executive_summary }}
+
+---
+
+## Verified Claims ({{ sections.verified_claims|length }})
+
+{% for claim in sections.verified_claims %}
+### {{ claim.claim_text }}
+
+- **Domain:** {{ claim.domain }}
+- **Confidence:** {{ (claim.confidence_score * 100)|round|int }}%
+- **Occurrences:** {{ claim.occurrences }}
+
+**Evidence:**
+{% for cit in claim.citations %}
+> "{{ cit.transcript_excerpt[:300] }}"
+>
+> — *{{ cit.video_title }}* ({{ cit.published_date[:10] if cit.published_date else 'Unknown date' }}), [{{ cit.start_time|round|int }}s]({{ cit.timestamp_url }})
+
+{% endfor %}
+
+---
+{% endfor %}
+
+{% if sections.contradictions %}
+## Contradictions ({{ sections.contradictions|length }})
+
+{% for c in sections.contradictions %}
+**Claim A:** {{ c.claim_a.text if c.claim_a else '' }}
+**Claim B:** {{ c.claim_b.text if c.claim_b else '' }}
+Similarity: {{ (c.similarity_score * 100)|round|int if c.similarity_score else 0 }}% — {{ c.reasoning or '' }}
+
+{% endfor %}
+{% endif %}
+
+## Sources
+
+{% for src in sections.source_appendix %}
+- [{{ src.video_title }}]({{ src.youtube_url }}) — {{ src.published_date[:10] if src.published_date else '' }} ({{ src.claims_cited }} claims)
+{% endfor %}

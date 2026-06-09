@@ -1,0 +1,29 @@
+{
+  "entities": [
+    {"name": "S&P 500", "entity_type": "financial_instrument", "description": "US large-cap stock market index"},
+    {"name": "index fund", "entity_type": "concept", "description": "Passively managed fund tracking a market index"},
+    {"name": "Warren Buffett", "entity_type": "person", "description": "Legendary investor and Berkshire Hathaway CEO"}
+  ],
+  "claims": [
+    {
+      "text": "More than 90 percent of actively managed funds underperform their benchmark index over a 20-year period",
+      "entities_mentioned": ["index fund"],
+      "raw_confidence": 0.88
+    },
+    {
+      "text": "The S&P 500 has returned an average of 10 percent annually over the last 50 years",
+      "entities_mentioned": ["S&P 500"],
+      "raw_confidence": 0.92
+    },
+    {
+      "text": "Warren Buffett recommends low-cost index funds as the best investment for most people",
+      "entities_mentioned": ["Warren Buffett", "index fund"],
+      "raw_confidence": 0.95
+    }
+  ],
+  "relationships": [
+    {"subject": "index fund", "predicate": "outperforms_over_time", "object": "actively managed fund"},
+    {"subject": "S&P 500", "predicate": "historical_return", "object": "10 percent annually"},
+    {"subject": "Warren Buffett", "predicate": "recommends", "object": "index fund"}
+  ]
+}

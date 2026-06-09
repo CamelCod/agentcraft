@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>{{ creator.channel_name }} — Knowledge Report</title>
+<style>
+  body { font-family: 'Segoe UI', sans-serif; max-width: 900px; margin: 0 auto; padding: 2rem; color: #1a1a1a; }
+  h1 { font-size: 2rem; border-bottom: 2px solid #2563eb; padding-bottom: .5rem; }
+  h2 { font-size: 1.3rem; color: #1d4ed8; margin-top: 2rem; }
+  h3 { font-size: 1rem; margin: 1.5rem 0 .5rem; }
+  .meta { color: #6b7280; font-size: .875rem; margin-bottom: 2rem; }
+  .claim { border: 1px solid #e5e7eb; border-radius: .5rem; padding: 1rem; margin: 1rem 0; }
+  .claim-confidence { display: inline-block; background: #dbeafe; color: #1e40af; padding: .2rem .6rem; border-radius: 9999px; font-size: .75rem; font-weight: 600; }
+  .evidence { background: #f9fafb; border-left: 3px solid #2563eb; padding: .75rem; margin: .5rem 0; border-radius: 0 .25rem .25rem 0; }
+  blockquote { margin: 0; font-style: italic; color: #374151; }
+  .citation-link { color: #2563eb; text-decoration: none; font-size: .8rem; }
+  .contradiction { border: 1px solid #fecaca; border-radius: .5rem; padding: 1rem; margin: 1rem 0; background: #fef2f2; }
+  .source-table { width: 100%; border-collapse: collapse; }
+  .source-table th, .source-table td { text-align: left; padding: .5rem; border-bottom: 1px solid #e5e7eb; font-size: .875rem; }
+  .source-table th { background: #f3f4f6; }
+  @page { size: A4; margin: 2cm; }
+</style>
+</head>
+<body>
+
+<h1>{{ creator.channel_name }} — Knowledge Report</h1>
+<div class="meta">
+  Generated: {{ generated_at[:10] }} &nbsp;·&nbsp;
+  Videos analyzed: {{ config.total_videos_analyzed }} &nbsp;·&nbsp;
+  Confidence threshold: {{ (config.confidence_threshold * 100)|round|int }}%
+</div>
+
+<h2>Executive Summary</h2>
+<p>{{ sections.executive_summary }}</p>
+
+<h2>Verified Claims ({{ sections.verified_claims|length }})</h2>
+
+{% for claim in sections.verified_claims %}
+<div class="claim">
+  <p><strong>{{ claim.claim_text }}</strong></p>
+  <p>
+    <span class="claim-confidence">{{ (claim.confidence_score * 100)|round|int }}% confidence</span>
+    &nbsp; Domain: {{ claim.domain }} &nbsp; Occurrences: {{ claim.occurrences }}
+  </p>
+  {% for cit in claim.citations %}
+  <div class="evidence">
+    <blockquote>"{{ cit.transcript_excerpt[:400] }}"</blockquote>
+    <p style="margin:.5rem 0 0; font-size:.8rem; color:#6b7280;">
+      — <em>{{ cit.video_title }}</em> ({{ cit.published_date[:10] if cit.published_date else '' }})
+      &nbsp;
+      <a class="citation-link" href="{{ cit.timestamp_url }}">▶ {{ cit.start_time|round|int }}s</a>
+    </p>
+  </div>
+  {% endfor %}
+</div>
+{% endfor %}
+
+{% if sections.contradictions %}
+<h2>Contradictions ({{ sections.contradictions|length }})</h2>
+{% for c in sections.contradictions %}
+<div class="contradiction">
+  <p><strong>Claim A:</strong> {{ c.claim_a.text if c.claim_a else '' }}</p>
+  <p><strong>Claim B:</strong> {{ c.claim_b.text if c.claim_b else '' }}</p>
+  <p style="font-size:.8rem; color:#b91c1c;">{{ c.reasoning or '' }}</p>
+</div>
+{% endfor %}
+{% endif %}
+
+<h2>Sources</h2>
+<table class="source-table">
+  <thead><tr><th>Video</th><th>Published</th><th>Duration</th><th>Claims cited</th></tr></thead>
+  <tbody>
+  {% for src in sections.source_appendix %}
+  <tr>
+    <td><a href="{{ src.youtube_url }}">{{ src.video_title[:80] }}</a></td>
+    <td>{{ src.published_date[:10] if src.published_date else '' }}</td>
+    <td>{{ src.duration }}</td>
+    <td>{{ src.claims_cited }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+</body>
+</html>
