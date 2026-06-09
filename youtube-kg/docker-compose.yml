@@ -48,13 +48,12 @@ services:
 
   # ─── API Gateway (FastAPI) ───────────────────────────────────────────────
   api:
-    <<: *common-env
+    <<: [*common-env, *backend-depends]
     build:
       context: ./backend
       dockerfile: Dockerfile
       target: production
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
-    <<: *backend-depends
     volumes:
       - ./backend:/app
     networks:
@@ -67,13 +66,12 @@ services:
 
   # ─── Celery Worker ───────────────────────────────────────────────────────
   worker:
-    <<: *common-env
+    <<: [*common-env, *backend-depends]
     build:
       context: ./backend
       dockerfile: Dockerfile
       target: production
     command: celery -A app.workers.celery_app worker --loglevel=info --concurrency=${CELERY_CONCURRENCY:-4} -Q default,discovery,ingestion,extraction,verification,reporting
-    <<: *backend-depends
     volumes:
       - ./backend:/app
     networks:
@@ -81,13 +79,12 @@ services:
 
   # ─── Celery Beat (Scheduler) ─────────────────────────────────────────────
   beat:
-    <<: *common-env
+    <<: [*common-env, *backend-depends]
     build:
       context: ./backend
       dockerfile: Dockerfile
       target: production
     command: celery -A app.workers.celery_app beat --loglevel=info --scheduler celery.beat:PersistentScheduler
-    <<: *backend-depends
     volumes:
       - ./backend:/app
       - celery-beat-data:/var/run/celery
@@ -96,13 +93,12 @@ services:
 
   # ─── Flower (Celery Monitor) ─────────────────────────────────────────────
   flower:
-    <<: *common-env
+    <<: [*common-env, *backend-depends]
     build:
       context: ./backend
       dockerfile: Dockerfile
       target: production
     command: celery -A app.workers.celery_app flower --port=5555
-    <<: *backend-depends
     networks:
       - internal
 
