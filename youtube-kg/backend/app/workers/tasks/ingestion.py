@@ -29,7 +29,9 @@ def launch_ingestion_pipeline(project_id: str, video_ids: list[str], domain_map:
 
     per_video_chains = [
         chain(
-            download_audio_task.s(video_id, project_id),
+            # None is the placeholder prev_result for the chain-head task;
+            # Celery won't inject one since there's no preceding task.
+            download_audio_task.s(None, video_id, project_id),
             transcribe_task.s(video_id, project_id),
             embed_task.s(video_id, project_id),
             extract_task.s(video_id, project_id, domain_map.get(video_id, "general")),

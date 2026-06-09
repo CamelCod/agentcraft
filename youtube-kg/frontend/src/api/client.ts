@@ -79,5 +79,10 @@ export const listReports = (projectId?: string) =>
   api.get('/reports', { params: projectId ? { project_id: projectId } : {} })
 export const createReport = (projectId: string, title: string, config: object) =>
   api.post('/reports', { project_id: projectId, title, config })
-export const getReportDownloadUrl = (reportId: string, format: string) =>
-  `/api/v1/reports/${reportId}/download/${format}`
+// Authenticated download: fetches a pre-signed URL via the bearer-protected
+// endpoint, then opens it in a new tab. Never use a plain anchor for this
+// endpoint — the Authorization header would be omitted and the request rejected.
+export const downloadReport = async (reportId: string, format: string): Promise<void> => {
+  const { data } = await api.get(`/reports/${reportId}/download/${format}`)
+  window.open(data.url, '_blank', 'noopener,noreferrer')
+}

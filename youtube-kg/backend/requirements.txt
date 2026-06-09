@@ -57,8 +57,9 @@ Jinja2==3.1.6
 langdetect==1.0.9
 
 # ─── Validation / config ─────────────────────────────────────────────────────
-pydantic==2.11.5
+pydantic[email]==2.11.5
 pydantic-settings==2.9.1
+email-validator==2.2.0
 python-dotenv==1.1.0
 
 # ─── Observability ───────────────────────────────────────────────────────────

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
-import { listReports, createReport, getReportDownloadUrl } from '../api/client'
+import { listReports, createReport, downloadReport } from '../api/client'
 
 const FORMATS = ['pdf', 'html', 'markdown', 'docx', 'json']
 
@@ -136,13 +136,13 @@ export default function ReportBuilderPage() {
                   {r.status === 'ready' && r.available_formats?.length > 0 && (
                     <div className="flex gap-2 flex-wrap">
                       {r.available_formats.map((fmt: string) => (
-                        <a
+                        <button
                           key={fmt}
-                          href={getReportDownloadUrl(r.id, fmt)}
+                          onClick={() => downloadReport(r.id, fmt)}
                           className="text-xs bg-gray-100 hover:bg-primary-100 text-gray-700 px-2 py-1 rounded font-medium transition-colors"
                         >
                           ↓ {fmt.toUpperCase()}
-                        </a>
+                        </button>
                       ))}
                     </div>
                   )}

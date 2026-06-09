@@ -2,7 +2,6 @@ import uuid
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException, status
-from fastapi.responses import RedirectResponse
 from sqlalchemy import select
 
 from app.api.deps import CurrentUser, DB
@@ -100,4 +99,6 @@ async def download_report(report_id: str, format: str, current_user: CurrentUser
     from app.core.storage import get_presigned_url
     settings = get_settings()
     url = get_presigned_url(settings.minio_bucket_reports, storage_key, expires_in=3600)
-    return RedirectResponse(url=url, status_code=302)
+    # Return the pre-signed URL as JSON so the frontend can open it after
+    # authenticating this request — a plain anchor would bypass the bearer token.
+    return {"url": url, "format": format, "expires_in": 3600}
