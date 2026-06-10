@@ -1,0 +1,34 @@
+═══════════════════════════════════════════════════════════════
+YouTube KG - Signup Feature Validation Report
+═══════════════════════════════════════════════════════════════
+
+Generated: Wed Jun 10 07:48:54 +04 2026
+Repository: /Users/root1/agentcraft/youtube-kg
+API URL: http://localhost
+
+Checking code files...
+✓ frontend/src/pages/SignupPage.tsx exists
+✓ frontend/src/pages/LoginPage.tsx exists
+✓ frontend/src/App.tsx exists
+✓ backend/app/schemas/auth.py exists
+✓ signup-test.sh exists
+
+Checking documentation...
+✓ CLAUDE.md exists
+✓ DEPLOYMENT_PLAN.md exists
+✓ SIGNUP_DEPLOYMENT_CHECKLIST.md exists
+✓ BUILD_COMPLETE.md exists
+
+Checking code quality...
+✓ SignupPage exports correctly
+✓ /signup route in App.tsx
+✓ Password min-length validation in auth.py
+✓ Signup link in LoginPage
+✓ signup-test.sh is executable
+
+Checking git status...
+✓ On claude/youtube-creator-knowledge-graph-d9a8o1
+✓ Signup commits present (       2)
+
+Attempting API connectivity...
+⚠ API not responding - skipping endpoint tests

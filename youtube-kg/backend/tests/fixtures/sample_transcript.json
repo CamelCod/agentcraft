@@ -1,0 +1,13 @@
+{
+  "segments": [
+    {"id": 0, "start": 0.0, "end": 8.5, "text": "Welcome back to the channel. Today we are going to talk about index fund investing and why it beats stock picking for most retail investors.", "words": []},
+    {"id": 1, "start": 8.5, "end": 18.2, "text": "Studies show that over a 20-year period, more than 90 percent of actively managed funds underperform their benchmark index.", "words": []},
+    {"id": 2, "start": 18.2, "end": 28.0, "text": "The S&P 500 has returned an average of 10 percent annually over the last 50 years, which is hard to beat consistently.", "words": []},
+    {"id": 3, "start": 28.0, "end": 40.0, "text": "Warren Buffett himself has said that a low-cost index fund is the best investment most people can make over the long term.", "words": []},
+    {"id": 4, "start": 40.0, "end": 55.0, "text": "Dollar-cost averaging into an index fund removes the emotional decision-making that causes most retail investors to buy high and sell low.", "words": []}
+  ],
+  "language": "en",
+  "language_probability": 0.99,
+  "duration_seconds": 55.0,
+  "processing_time_seconds": 3.2
+}
