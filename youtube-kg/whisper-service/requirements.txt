@@ -3,3 +3,5 @@ fastapi==0.115.12
 uvicorn[standard]==0.34.3
 ffmpeg-python==0.2.0
 numpy==2.2.6
+requests==2.32.3
+python-multipart==0.0.20
