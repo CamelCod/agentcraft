@@ -12,25 +12,41 @@ class Settings(BaseSettings):
     first_superuser_password: str = "changeme"
 
     # PostgreSQL
+    database_url: str = ""
     postgres_host: str = "localhost"
     postgres_port: int = 5432
     postgres_db: str = "youtubekg"
     postgres_user: str = "youtubekg"
     postgres_password: str = "changeme"
 
-    @property
-    def database_url(self) -> str:
+    def get_database_url(self) -> str:
+        if self.database_url:
+            url = self.database_url
+            if url.startswith("postgresql://"):
+                return url.replace("postgresql://", "postgresql+asyncpg://")
+            return url
         return (
             f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}"
             f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
         )
 
-    @property
-    def sync_database_url(self) -> str:
+    def get_sync_database_url(self) -> str:
+        """Get synchronous database URL for Alembic migrations"""
+        if self.database_url:
+            url = self.database_url
+            if url.startswith("postgresql+asyncpg://"):
+                return url.replace("postgresql+asyncpg://", "postgresql://")
+            elif url.startswith("postgresql://"):
+                return url
+            return url
         return (
             f"postgresql://{self.postgres_user}:{self.postgres_password}"
             f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
         )
+
+    @property
+    def sync_database_url(self) -> str:
+        return self.get_sync_database_url()
 
     # Neo4j
     neo4j_uri: str = "bolt://localhost:7687"
