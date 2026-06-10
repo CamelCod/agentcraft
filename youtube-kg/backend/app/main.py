@@ -39,6 +39,7 @@ async def lifespan(app: FastAPI):
 
 async def _background_init() -> None:
     """Background initialization task. Doesn't block app startup."""
+    import asyncio
     import logging
 
     logger = logging.getLogger(__name__)
