@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -9,14 +10,48 @@ from app.config import get_settings
 from app.database import engine
 from app.models import Base
 
+logger = logging.getLogger(__name__)
 settings = get_settings()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Skip heavy initialization on startup - allow app to start immediately
-    # These can be initialized on-demand or via background tasks
+    import asyncio
+
+    # Start initialization in background - don't block app startup
+    initialization_task = asyncio.create_task(
+        _background_init()
+    )
+
+    # Store task in app state for monitoring
+    app.state.initialization_task = initialization_task
+
     yield
+
+    # Wait for initialization to complete on shutdown (graceful cleanup)
+    try:
+        await asyncio.wait_for(initialization_task, timeout=5.0)
+    except asyncio.TimeoutError:
+        logger.warning("App initialization still running during shutdown")
+    except Exception as e:
+        logger.warning(f"App initialization failed: {e}")
+
+
+async def _background_init() -> None:
+    """Background initialization task. Doesn't block app startup."""
+    import logging
+
+    logger = logging.getLogger(__name__)
+
+    try:
+        # Give the app a moment to start serving before we start heavy operations
+        await asyncio.sleep(1)
+
+        from app.initialization import background_initialize
+
+        await background_initialize(skip_migrations=False)
+    except Exception as e:
+        logger.error(f"Background initialization failed: {e}")
 
 
 app = FastAPI(
@@ -49,3 +84,30 @@ app.include_router(reports.router, prefix="/api/v1")
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+@app.get("/initialization-status")
+async def initialization_status():
+    """Check app initialization status."""
+    task = getattr(app.state, "initialization_task", None)
+
+    if task is None:
+        return {"status": "not_started"}
+
+    if task.done():
+        try:
+            result = task.result()
+            return {
+                "status": "completed",
+                "result": result,
+            }
+        except Exception as e:
+            return {
+                "status": "failed",
+                "error": str(e),
+            }
+    else:
+        return {
+            "status": "initializing",
+            "message": "App is initializing services in the background",
+        }
