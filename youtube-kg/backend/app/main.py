@@ -14,47 +14,77 @@ settings = get_settings()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Create PostgreSQL tables on startup
-    try:
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-    except Exception as e:
-        # Schema may already exist or be partially set up
-        # Continue anyway - migrations will handle proper schema management
-        print(f"Warning: Could not create tables on startup: {e}")
+    import asyncio
 
-    # Ensure Neo4j constraints exist
+    async def init_db():
+        try:
+            async with engine.begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
+        except Exception as e:
+            print(f"Warning: Could not create tables: {e}")
+
+    async def init_graph():
+        try:
+            from app.services.graph_service import ensure_constraints
+            ensure_constraints()
+        except Exception:
+            pass
+
+    async def init_qdrant():
+        try:
+            from app.services.memory import ensure_collections
+            ensure_collections()
+        except Exception:
+            pass
+
+    async def init_superuser():
+        try:
+            from app.database import AsyncSessionLocal
+            from sqlalchemy import select
+            from app.models.user import User, UserRole
+            from app.core.security import hash_password
+
+            async with AsyncSessionLocal() as session:
+                result = await session.execute(select(User).where(User.email == settings.first_superuser_email))
+                if not result.scalar_one_or_none():
+                    session.add(User(
+                        email=settings.first_superuser_email,
+                        hashed_password=hash_password(settings.first_superuser_password),
+                        role=UserRole.admin,
+                        full_name="Admin",
+                    ))
+                    await session.commit()
+        except Exception as e:
+            print(f"Warning: Could not create initial superuser: {e}")
+
+    # Run initialization tasks with timeout to prevent hanging
     try:
-        from app.services.graph_service import ensure_constraints
-        ensure_constraints()
+        await asyncio.wait_for(init_db(), timeout=10.0)
+    except asyncio.TimeoutError:
+        print("Warning: Database initialization timed out")
+    except Exception as e:
+        print(f"Warning: Database init failed: {e}")
+
+    try:
+        await asyncio.wait_for(init_graph(), timeout=5.0)
+    except asyncio.TimeoutError:
+        print("Warning: Graph initialization timed out")
     except Exception:
         pass
 
-    # Ensure Qdrant collections exist
     try:
-        from app.services.memory import ensure_collections
-        ensure_collections()
+        await asyncio.wait_for(init_qdrant(), timeout=5.0)
+    except asyncio.TimeoutError:
+        print("Warning: Qdrant initialization timed out")
     except Exception:
         pass
 
-    # Create first superuser if not present
     try:
-        from app.database import AsyncSessionLocal
-        from sqlalchemy import select
-        from app.models.user import User, UserRole
-        from app.core.security import hash_password
-        async with AsyncSessionLocal() as session:
-            result = await session.execute(select(User).where(User.email == settings.first_superuser_email))
-            if not result.scalar_one_or_none():
-                session.add(User(
-                    email=settings.first_superuser_email,
-                    hashed_password=hash_password(settings.first_superuser_password),
-                    role=UserRole.admin,
-                    full_name="Admin",
-                ))
-                await session.commit()
+        await asyncio.wait_for(init_superuser(), timeout=10.0)
+    except asyncio.TimeoutError:
+        print("Warning: Superuser creation timed out")
     except Exception as e:
-        print(f"Warning: Could not create initial superuser: {e}")
+        print(f"Warning: Superuser creation failed: {e}")
 
     yield
 
