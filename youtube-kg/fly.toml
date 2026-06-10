@@ -37,7 +37,7 @@ primary_region = "lhr"  # London - closest to Europe
 
 [deploy]
   release_command = "alembic upgrade head"
-  strategy = "canary"
+  strategy = "rolling"
 
 [[services]]
   protocol = "tcp"
@@ -79,10 +79,11 @@ primary_region = "lhr"  # London - closest to Europe
   worker = "celery -A app.workers.celery_app worker --loglevel=info"
   beat = "celery -A app.workers.celery_app beat --loglevel=info"
 
-[[mounts]]
-  source = "data"
-  destination = "/app/data"
-  processes = ["app"]
+# Volumes disabled for Fly.io free tier
+# [[mounts]]
+#   source = "data"
+#   destination = "/app/data"
+#   processes = ["app"]
 
 [experimental]
   auto_rollback = true
