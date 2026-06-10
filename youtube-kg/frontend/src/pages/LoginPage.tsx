@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { login } from '../api/client'
 import { useAuthStore } from '../store/authStore'
 
 export default function LoginPage() {
@@ -9,7 +9,9 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
-  const { setSession } = useAuthStore()
+  const location = useLocation()
+  const { setUser } = useAuthStore()
+  const successMessage = (location.state as any)?.message
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -33,6 +35,12 @@ export default function LoginPage() {
       <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-md">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">YouTube KG Platform</h1>
         <p className="text-gray-500 mb-6 text-sm">Sign in to your workspace</p>
+
+        {successMessage && (
+          <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+            <p className="text-green-700 text-sm">{successMessage}</p>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -64,6 +72,13 @@ export default function LoginPage() {
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
+
+        <p className="text-center text-sm text-gray-500 mt-4">
+          Don't have an account?{' '}
+          <a href="/signup" className="text-primary-600 hover:underline font-medium">
+            Sign up
+          </a>
+        </p>
       </div>
     </div>
   )

@@ -4,6 +4,7 @@ import { supabase } from './lib/supabase'
 import { useAuthStore } from './store/authStore'
 import AppShell from './components/layout/AppShell'
 import LoginPage from './pages/LoginPage'
+import SignupPage from './pages/SignupPage'
 import ProjectsPage from './pages/ProjectsPage'
 import DomainSelectionPage from './pages/DomainSelectionPage'
 import IngestionMonitorPage from './pages/IngestionMonitorPage'
@@ -32,6 +33,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
         <Route
           path="/*"
           element={
