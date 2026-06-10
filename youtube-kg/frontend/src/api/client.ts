@@ -1,12 +1,15 @@
 import axios from 'axios'
+import { supabase } from '../lib/supabase'
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1'
 
 export const api = axios.create({ baseURL: BASE_URL })
 
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('access_token')
-  if (token) config.headers.Authorization = `Bearer ${token}`
+api.interceptors.request.use(async (config) => {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (session?.access_token) {
+    config.headers.Authorization = `Bearer ${session.access_token}`
+  }
   return config
 })
 
@@ -14,31 +17,19 @@ api.interceptors.response.use(
   (r) => r,
   async (error) => {
     if (error.response?.status === 401) {
-      const refresh = localStorage.getItem('refresh_token')
-      if (refresh) {
-        try {
-          const { data } = await axios.post(`${BASE_URL}/auth/refresh`, { refresh_token: refresh })
-          localStorage.setItem('access_token', data.access_token)
-          localStorage.setItem('refresh_token', data.refresh_token)
-          error.config.headers.Authorization = `Bearer ${data.access_token}`
-          return api(error.config)
-        } catch {
-          localStorage.clear()
-          window.location.href = '/login'
-        }
+      const { data: { session } } = await supabase.auth.refreshSession()
+      if (session) {
+        error.config.headers.Authorization = `Bearer ${session.access_token}`
+        return api(error.config)
       }
+      await supabase.auth.signOut()
+      window.location.href = '/login'
     }
     return Promise.reject(error)
   },
 )
 
 // ─── Auth ───────────────────────────────────────────────────────────────────
-export const login = (email: string, password: string) =>
-  api.post('/auth/login', { email, password })
-
-export const register = (email: string, password: string, full_name?: string) =>
-  api.post('/auth/register', { email, password, full_name })
-
 export const getMe = () => api.get('/auth/me')
 
 // ─── Projects ────────────────────────────────────────────────────────────────
@@ -79,9 +70,6 @@ export const listReports = (projectId?: string) =>
   api.get('/reports', { params: projectId ? { project_id: projectId } : {} })
 export const createReport = (projectId: string, title: string, config: object) =>
   api.post('/reports', { project_id: projectId, title, config })
-// Authenticated download: fetches a pre-signed URL via the bearer-protected
-// endpoint, then opens it in a new tab. Never use a plain anchor for this
-// endpoint — the Authorization header would be omitted and the request rejected.
 export const downloadReport = async (reportId: string, format: string): Promise<void> => {
   const { data } = await api.get(`/reports/${reportId}/download/${format}`)
   window.open(data.url, '_blank', 'noopener,noreferrer')

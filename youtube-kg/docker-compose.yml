@@ -43,8 +43,22 @@ services:
       dockerfile: Dockerfile
     environment:
       - VITE_API_BASE_URL=${VITE_API_BASE_URL}
+      - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
+      - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
     networks:
       - internal
+
+  # ─── Cloudflare Tunnel ───────────────────────────────────────────────────
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    networks:
+      - public
+    restart: unless-stopped
+    depends_on:
+      - nginx
 
   # ─── API Gateway (FastAPI) ───────────────────────────────────────────────
   api:

@@ -83,8 +83,13 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 60
     refresh_token_expire_days: int = 30
 
+    # Supabase (leave blank to keep legacy JWT auth)
+    supabase_url: str = ""
+    supabase_anon_key: str = ""
+    supabase_jwt_secret: str = ""  # Project Settings > API > JWT Secret
+
     # CORS
-    cors_origins: str = "http://localhost,http://localhost:3000"
+    cors_origins: str = "http://localhost,http://localhost:3000,https://agentcraftconsultancy.com"
 
     @property
     def cors_origins_list(self) -> list[str]:

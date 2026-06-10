@@ -1,4 +1,6 @@
+import { useEffect } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { supabase } from './lib/supabase'
 import { useAuthStore } from './store/authStore'
 import AppShell from './components/layout/AppShell'
 import LoginPage from './pages/LoginPage'
@@ -16,6 +18,16 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  const { setSession } = useAuthStore()
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => setSession(session))
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+    })
+    return () => subscription.unsubscribe()
+  }, [setSession])
+
   return (
     <BrowserRouter>
       <Routes>
@@ -27,6 +39,7 @@ export default function App() {
               <AppShell>
                 <Routes>
                   <Route path="/" element={<Navigate to="/projects" replace />} />
+                  <Route path="/dashboard" element={<Navigate to="/projects" replace />} />
                   <Route path="/projects" element={<ProjectsPage />} />
                   <Route path="/projects/:id/domains" element={<DomainSelectionPage />} />
                   <Route path="/projects/:id/ingestion" element={<IngestionMonitorPage />} />
