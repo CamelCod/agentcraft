@@ -1,0 +1,101 @@
+# Fly.io configuration for YouTube Creator Knowledge Graph
+# Full-stack deployment with FastAPI backend and React frontend
+
+app = "youtube-kg-saas"
+primary_region = "lhr"  # London - closest to Europe
+
+[build]
+  dockerfile = "Dockerfile"
+  context = "backend"
+
+[env]
+  # Application
+  APP_ENV = "production"
+  SECRET_KEY = "fly-prod-key-change-me-in-settings"
+  FIRST_SUPERUSER_EMAIL = "admin@example.com"
+  FIRST_SUPERUSER_PASSWORD = "changeme-in-production"
+
+  # Database URLs (will be set via Fly secrets)
+  DATABASE_URL = "postgresql://user:pass@localhost/youtubekg"
+  NEO4J_URI = "bolt://neo4j:7687"
+  NEO4J_USER = "neo4j"
+  NEO4J_PASSWORD = "changeme"
+
+  # Redis
+  REDIS_URL = "redis://redis:6379/0"
+
+  # CORS - Update for production domain
+  CORS_ORIGINS = "https://agentcraftconsultancy.com,https://www.agentcraftconsultancy.com"
+
+  # Frontend
+  VITE_API_BASE_URL = "https://api.agentcraftconsultancy.com"
+
+  # LLM Provider
+  LLM_PROVIDER = "anthropic"
+  LLM_MODEL = "claude-haiku-4-5-20251001"
+  LLM_REPORT_MODEL = "claude-sonnet-4-6"
+
+[deploy]
+  release_command = "alembic upgrade head"
+  strategy = "canary"
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 8000
+  processes = ["app"]
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+    force_https = true
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+  [services.http_checks]
+    enabled = true
+    grace_period = "30s"
+    interval = "15s"
+    timeout = "5s"
+    method = "GET"
+    path = "/health"
+
+  [services.tcp_checks]
+    enabled = false
+
+[checks]
+  [checks.status]
+    type = "http"
+    interval = "10s"
+    grace_period = "30s"
+    method = "GET"
+    path = "/health"
+    expected_http_status = 200
+    timeout = 5
+
+[processes]
+  app = "uvicorn app.main:app --host 0.0.0.0 --port 8000"
+  worker = "celery -A app.workers.celery_app worker --loglevel=info"
+  beat = "celery -A app.workers.celery_app beat --loglevel=info"
+
+[[mounts]]
+  source = "data"
+  destination = "/app/data"
+  processes = ["app"]
+
+[experimental]
+  auto_rollback = true
+
+# Scale configuration
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 512
+  processes = ["app"]
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 256
+  processes = ["worker", "beat"]
