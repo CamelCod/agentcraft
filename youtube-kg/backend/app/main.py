@@ -15,8 +15,13 @@ settings = get_settings()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Create PostgreSQL tables on startup
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+    except Exception as e:
+        # Schema may already exist or be partially set up
+        # Continue anyway - migrations will handle proper schema management
+        print(f"Warning: Could not create tables on startup: {e}")
 
     # Ensure Neo4j constraints exist
     try:
@@ -33,20 +38,23 @@ async def lifespan(app: FastAPI):
         pass
 
     # Create first superuser if not present
-    from app.database import AsyncSessionLocal
-    from sqlalchemy import select
-    from app.models.user import User, UserRole
-    from app.core.security import hash_password
-    async with AsyncSessionLocal() as session:
-        result = await session.execute(select(User).where(User.email == settings.first_superuser_email))
-        if not result.scalar_one_or_none():
-            session.add(User(
-                email=settings.first_superuser_email,
-                hashed_password=hash_password(settings.first_superuser_password),
-                role=UserRole.admin,
-                full_name="Admin",
-            ))
-            await session.commit()
+    try:
+        from app.database import AsyncSessionLocal
+        from sqlalchemy import select
+        from app.models.user import User, UserRole
+        from app.core.security import hash_password
+        async with AsyncSessionLocal() as session:
+            result = await session.execute(select(User).where(User.email == settings.first_superuser_email))
+            if not result.scalar_one_or_none():
+                session.add(User(
+                    email=settings.first_superuser_email,
+                    hashed_password=hash_password(settings.first_superuser_password),
+                    role=UserRole.admin,
+                    full_name="Admin",
+                ))
+                await session.commit()
+    except Exception as e:
+        print(f"Warning: Could not create initial superuser: {e}")
 
     yield
 
