@@ -139,9 +139,18 @@ async def initialize_app(skip_migrations: bool = False) -> dict:
     return status
 
 
-async def background_initialize(skip_migrations: bool = False) -> None:
-    """Run initialization in background (non-blocking). Logs results."""
+async def background_initialize(skip_migrations: bool = False) -> dict:
+    """Run initialization in background (non-blocking). Logs and returns results."""
     try:
-        await initialize_app(skip_migrations=skip_migrations)
+        result = await initialize_app(skip_migrations=skip_migrations)
+        return result
     except Exception as e:
         logger.error(f"Background initialization failed: {e}")
+        return {
+            "migrations": False,
+            "graph": False,
+            "qdrant": False,
+            "superuser": False,
+            "success": False,
+            "error": str(e),
+        }

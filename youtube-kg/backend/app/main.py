@@ -23,18 +23,21 @@ async def lifespan(app: FastAPI):
         _background_init()
     )
 
-    # Store task in app state for monitoring
+    # Store task and result in app state for monitoring
     app.state.initialization_task = initialization_task
+    app.state.initialization_result = None
 
     yield
 
     # Wait for initialization to complete on shutdown (graceful cleanup)
     try:
-        await asyncio.wait_for(initialization_task, timeout=5.0)
+        app.state.initialization_result = await asyncio.wait_for(initialization_task, timeout=5.0)
     except asyncio.TimeoutError:
         logger.warning("App initialization still running during shutdown")
+        app.state.initialization_result = {"success": False, "error": "Timeout during shutdown"}
     except Exception as e:
         logger.warning(f"App initialization failed: {e}")
+        app.state.initialization_result = {"success": False, "error": str(e)}
 
 
 async def _background_init() -> None:
@@ -91,17 +94,24 @@ async def health():
 async def initialization_status():
     """Check app initialization status."""
     task = getattr(app.state, "initialization_task", None)
+    stored_result = getattr(app.state, "initialization_result", None)
 
     if task is None:
         return {"status": "not_started"}
 
     if task.done():
         try:
-            result = task.result()
-            return {
-                "status": "completed",
-                "result": result,
-            }
+            result = stored_result or task.result()
+            if result:
+                return {
+                    "status": "completed",
+                    "details": result,
+                }
+            else:
+                return {
+                    "status": "completed",
+                    "message": "Initialization completed",
+                }
         except Exception as e:
             return {
                 "status": "failed",
