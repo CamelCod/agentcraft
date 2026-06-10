@@ -1,0 +1,57 @@
+════════════════════════════════════════════════════════════════
+YouTube Knowledge Graph - Signup Feature Validation Report
+════════════════════════════════════════════════════════════════
+
+Report generated: Wed Jun 10 07:48:54 +04 2026
+Repository: /Users/root1/agentcraft/youtube-kg
+API Base URL: http://localhost
+
+[1;33m1. Checking code files...[0m
+[0;32m✓[0m frontend/src/pages/SignupPage.tsx exists
+[0;32m✓[0m frontend/src/pages/LoginPage.tsx exists
+[0;32m✓[0m frontend/src/App.tsx exists
+[0;32m✓[0m backend/app/schemas/auth.py exists
+[0;32m✓[0m signup-test.sh exists
+[0;32mAll code files present[0m
+
+[1;33m2. Checking documentation...[0m
+[0;32m✓[0m CLAUDE.md exists
+[0;32m✓[0m DEPLOYMENT_PLAN.md exists
+[0;32m✓[0m SIGNUP_DEPLOYMENT_CHECKLIST.md exists
+[0;32m✓[0m BUILD_COMPLETE.md exists
+[0;32mAll documentation present[0m
+
+[1;33m3. Checking code quality...[0m
+[0;32m✓[0m SignupPage exports correctly
+[0;32m✓[0m /signup route in App.tsx
+[0;32m✓[0m Password min-length validation in auth.py
+[0;32m✓[0m Signup link in LoginPage
+[0;32m✓[0m signup-test.sh is executable
+[0;32mCode quality checks passed[0m
+
+[1;33m4. Checking git status...[0m
+[0;32m✓[0m On correct branch
+[0;32m✓[0m Signup commits present (       2)
+
+[1;33m5. Attempting API connectivity test...[0m
+[1;33m⚠[0m API not responding (HTTP 000000)
+
+To run full validation:
+1. Start Docker Compose: docker compose up -d
+2. Wait for services: docker compose ps
+3. Run tests: bash signup-test.sh http://localhost
+
+[0;34m════════════════════════════════════════════════════════════════[0m
+[0;34mValidation Complete[0m
+[0;34m════════════════════════════════════════════════════════════════[0m
+
+Report saved to: /Users/root1/agentcraft/youtube-kg/validation-report-2026-06-10_07-48-54.txt
+
+Next steps:
+1. Review code changes: git show HEAD~2..HEAD
+2. Run startup script: docker compose up -d
+3. Test signup: bash signup-test.sh http://localhost
+4. Manual test: Open http://localhost/signup in browser
+5. Deploy: Merge to main and run in production
+
+[0;32m✅ Build validation complete![0m
