@@ -1,0 +1,3 @@
+module.exports=[60350,a=>{"use strict";var b=a.i(87924),c=a.i(72131),d=a.i(50944),e=a.i(78560);a.s(["default",0,function(){let a=(0,d.useRouter)();return(0,c.useEffect)(()=>{(async()=>{let{data:{session:b}}=await e.supabase.auth.getSession();b?a.push("/dashboard"):a.push("/auth")})()},[a]),(0,b.jsx)("div",{className:"flex items-center justify-center min-h-screen",children:(0,b.jsx)("p",{className:"text-gray-600",children:"Loading..."})})}])}];
+
+//# sourceMappingURL=app_page_tsx_0pxmutw._.js.map

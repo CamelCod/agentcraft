@@ -3,7 +3,8 @@
     "nodeVersion": "18.x"
   },
   "env": {
-    "NEXT_PUBLIC_SUPABASE_URL": "https://bioocabvpcfkxliimixs.supabase.co",
+    "NEXT_PUBLIC_SUPABASE_URL": "https://dqqxxyhdhokztuyppyqk.supabase.co",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_Lf991pYOPxx1uIBawYSH1Q_g2QRI7TN",
     "NEXT_PUBLIC_API_URL": "https://home.agentcraftconsultancy.com"
   }
 }
