@@ -1,0 +1,24 @@
+name = "agentcraft"
+main = "functions/index.js"
+compatibility_date = "2024-12-16"
+
+# Routes configuration
+routes = [
+  { pattern = "agentcraftconsultancy.com/*", zone_name = "agentcraftconsultancy.com" }
+]
+
+# Build configuration for Astro
+build = {
+  command = "cd website && npm install && npm run build",
+  cwd = ".",
+  watch_paths = ["website/**/*.{astro,ts,tsx,js,jsx,md}"]
+}
+
+# Environment variables (optional)
+[env.production]
+routes = [
+  { pattern = "agentcraftconsultancy.com/*", zone_name = "agentcraftconsultancy.com" }
+]
+
+[env.staging]
+name = "agentcraft-staging"
