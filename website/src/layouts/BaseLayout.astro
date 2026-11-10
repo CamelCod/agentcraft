@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import PostHog from '../components/PostHog.astro';
 
 export interface Props {
   title: string;
@@ -63,6 +64,8 @@ const canonicalURL = new URL(Astro.url.pathname, siteUrl);
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
       }
     </style>
+
+    <PostHog />
   </head>
   <body>
     <slot />
